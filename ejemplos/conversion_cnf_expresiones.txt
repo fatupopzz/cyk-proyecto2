@@ -1,0 +1,88 @@
+Gramática: grammars/expresiones.txt
+  Original: 5 no terminales, 5 terminales, 8 producciones
+  CNF:      13 no terminales, 24 producciones, símbolo inicial E0  (conversión en 503.48 µs)
+
+=== 0. ORIG: Gramática original =================================
+E → T X
+X → + T X | ε
+T → F Y
+Y → * F Y | ε
+F → ( E ) | id
+  (5 no terminales, 8 producciones)
+
+=== 1. START: Símbolo inicial ===================================
+  · E aparece en un lado derecho, se agrega E0 → E.
+E0 → E
+E  → T X
+X  → + T X | ε
+T  → F Y
+Y  → * F Y | ε
+F  → ( E ) | id
+  (6 no terminales, 9 producciones)
+
+=== 2. DEL: Eliminar producciones ε =============================
+  · Anulables: {X, Y}
+  · Se eliminan: X → ε, Y → ε
+E0 → E
+E  → T X | T
+X  → + T X | + T
+T  → F Y | F
+Y  → * F Y | * F
+F  → ( E ) | id
+  (6 no terminales, 11 producciones)
+
+=== 3. UNIT: Eliminar producciones unitarias ====================
+  · Unitarias eliminadas: E0 → E, E → T, T → F
+  · Pares unitarios (A =>* B): (E0,E), (E0,T), (E0,F), (E,T), (E,F), (T,F)
+E0 → T X | F Y | ( E ) | id
+E  → T X | F Y | ( E ) | id
+X  → + T X | + T
+T  → F Y | ( E ) | id
+Y  → * F Y | * F
+F  → ( E ) | id
+  (6 no terminales, 17 producciones)
+
+=== 4. USELESS: Eliminar símbolos inútiles ======================
+  · Todos los símbolos son generadores.
+  · Todos los símbolos son alcanzables.
+E0 → T X | F Y | ( E ) | id
+E  → T X | F Y | ( E ) | id
+X  → + T X | + T
+T  → F Y | ( E ) | id
+Y  → * F Y | * F
+F  → ( E ) | id
+  (6 no terminales, 17 producciones)
+
+=== 5. TERM: Separar terminales =================================
+  · Nuevos: T_LPAR → (, T_RPAR → ), T_PLUS → +, T_STAR → *
+E0     → T X | F Y | T_LPAR E T_RPAR | id
+E      → T X | F Y | T_LPAR E T_RPAR | id
+X      → T_PLUS T X | T_PLUS T
+T      → F Y | T_LPAR E T_RPAR | id
+Y      → T_STAR F Y | T_STAR F
+F      → T_LPAR E T_RPAR | id
+T_LPAR → (
+T_RPAR → )
+T_PLUS → +
+T_STAR → *
+  (10 no terminales, 21 producciones)
+
+=== 6. BIN: Binarizar reglas largas =============================
+  · Auxiliares: E0_1 → E T_RPAR, X_1 → T X, Y_1 → F Y
+E0     → T X | F Y | T_LPAR E0_1 | id
+E      → T X | F Y | T_LPAR E0_1 | id
+X      → T_PLUS X_1 | T_PLUS T
+T      → F Y | T_LPAR E0_1 | id
+Y      → T_STAR Y_1 | T_STAR F
+F      → T_LPAR E0_1 | id
+T_LPAR → (
+T_RPAR → )
+T_PLUS → +
+T_STAR → *
+E0_1   → E T_RPAR
+X_1    → T X
+Y_1    → F Y
+  (13 no terminales, 24 producciones)
+Escriba una frase (Enter vacío o Ctrl-D para salir). Use 'ε' para la cadena vacía.
+
+w = 

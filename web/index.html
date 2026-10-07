@@ -1,0 +1,858 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laboratorio CYK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cuaderno de laboratorio sobre papel cuadriculado. Gramática y CNF lado a lado;
+   debajo, la frase, la pirámide del CYK, el árbol y el lote de pruebas a todo el ancho. */
+:root {
+  --paper: #f4f6fb;
+  --grid: rgba(51, 70, 211, 0.055);
+  --panel: #ffffff;
+  --ink: #151a2d;
+  --ink-2: #4b5373;
+  --ink-3: #868ca6;
+  --rule: #dde1ec;
+  --accent: #3346d3;
+  --accent-ink: #ffffff;
+  --accent-soft: #e7eafc;
+  --term: #b4531f;
+  --term-soft: #fbeadf;
+  --left: #c27a00;
+  --left-soft: #fdf0d6;
+  --right: #0d8a80;
+  --right-soft: #d8f2ef;
+  --yes: #17834a;
+  --yes-soft: #dcf2e4;
+  --no: #c03535;
+  --no-soft: #fbe2e2;
+  --shadow: 0 1px 2px rgba(21, 26, 45, 0.06), 0 4px 16px rgba(21, 26, 45, 0.05);
+
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e1120; --grid: rgba(142, 156, 255, 0.05); --panel: #161a2c;
+    --ink: #e9ecf8; --ink-2: #aab1cd; --ink-3: #6f7697; --rule: #2a3050;
+    --accent: #8e9cff; --accent-ink: #0e1120; --accent-soft: #242b55;
+    --term: #ff9d66; --term-soft: #3a2316; --left: #f2b54b; --left-soft: #3a2b10;
+    --right: #45cbbf; --right-soft: #10332f; --yes: #52c985; --yes-soft: #123222;
+    --no: #ff7d7d; --no-soft: #3b1818; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e1120; --grid: rgba(142, 156, 255, 0.05); --panel: #161a2c;
+  --ink: #e9ecf8; --ink-2: #aab1cd; --ink-3: #6f7697; --rule: #2a3050;
+  --accent: #8e9cff; --accent-ink: #0e1120; --accent-soft: #242b55;
+  --term: #ff9d66; --term-soft: #3a2316; --left: #f2b54b; --left-soft: #3a2b10;
+  --right: #45cbbf; --right-soft: #10332f; --yes: #52c985; --yes-soft: #123222;
+  --no: #ff7d7d; --no-soft: #3b1818; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font: 15px/1.55 var(--f-body);
+  padding-inline: 16px;
+  padding-block: 0 48px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 20px; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, .mono { font-family: var(--f-mono); }
+
+/* ---------- encabezado ---------- */
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 28px; }
+.brand h1 { font: 700 clamp(30px, 6vw, 46px)/1 var(--f-display); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.brand h1 .sub { color: var(--accent); }
+.brand p { margin: 8px 0 0; color: var(--ink-2); max-width: 62ch; }
+.engine { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+  background: var(--panel); border: 1px solid var(--rule); font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+.engine .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--right); }
+.engine.py .dot { background: var(--yes); }
+
+/* ---------- tarjetas ---------- */
+.row2 { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 960px) { .row2 { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); } }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px; min-width: 0; display: grid; gap: 14px; align-content: start; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.card h2 { font: 600 20px/1.2 var(--f-display); margin: 0; letter-spacing: -0.01em; }
+.eyebrow { font: 600 11px/1 var(--f-body); letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); }
+.muted { color: var(--ink-3); font-size: 13px; }
+.hint { color: var(--ink-2); font-size: 13.5px; margin: 0; }
+
+/* chips y botones */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--rule); background: var(--panel); border-radius: 999px; padding: 5px 11px; font-size: 13px; color: var(--ink-2); }
+.chip:hover { border-color: var(--accent); color: var(--ink); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chip.ex { font-family: var(--f-mono); font-size: 12.5px; }
+.chip.ex.y { border-color: color-mix(in srgb, var(--yes) 40%, var(--rule)); }
+.chip.ex.n { border-color: color-mix(in srgb, var(--no) 40%, var(--rule)); }
+.btn { border: 1px solid var(--rule); background: var(--panel); border-radius: 8px; padding: 7px 13px; font-size: 14px; font-weight: 500; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn:disabled { opacity: .45; cursor: default; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; font-size: 13.5px; color: var(--ink-2); }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+textarea, input[type="text"] { width: 100%; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper);
+  padding: 10px 12px; font-family: var(--f-mono); font-size: 13.5px; line-height: 1.6; }
+textarea { resize: vertical; min-height: 220px; tab-size: 4; }
+.err { background: var(--no-soft); color: var(--no); border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.stats b { color: var(--ink); font-weight: 600; }
+
+/* ---------- pasos CNF ---------- */
+.steps { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px; }
+.step { flex: 1 0 auto; border: 1px solid var(--rule); background: var(--panel); border-radius: 8px; padding: 6px 10px;
+  display: grid; gap: 1px; text-align: left; min-width: 64px; }
+.step .num { font: 500 11px var(--f-mono); color: var(--ink-3); }
+.step .k { font: 600 13px var(--f-mono); color: var(--ink-2); }
+.step.changed .k::after { content: " •"; color: var(--right); }
+.step[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.step[aria-pressed="true"] .k { color: var(--accent); }
+.steptitle { font: 600 14px/1.3 var(--f-body); color: var(--ink-2); }
+.notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13.5px; color: var(--ink-2); }
+.notes li { padding-left: 14px; position: relative; overflow-wrap: anywhere; }
+.notes li::before { content: ""; position: absolute; left: 2px; top: .65em; width: 5px; height: 5px; border-radius: 50%; background: var(--ink-3); }
+.rules { font-family: var(--f-mono); font-size: 13.5px; line-height: 1.5; display: grid; gap: 3px; overflow-x: auto; }
+.rule { display: grid; grid-template-columns: var(--lw, 6ch) 2ch minmax(0, 1fr); align-items: baseline; }
+.rule .lhs { font-weight: 600; }
+.rule .lhs.new { color: var(--right); }
+.rule .arrow { color: var(--ink-3); }
+.alts { display: flex; flex-wrap: wrap; gap: 2px 0; }
+.alt { padding: 0 3px; border-radius: 4px; white-space: nowrap; }
+.alt.add { background: var(--right-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--right) 35%, transparent); }
+.bar { color: var(--ink-3); padding: 0 4px; }
+.tm { color: var(--term); }
+.eps { color: var(--ink-3); font-style: italic; }
+.removed { font-family: var(--f-mono); font-size: 13px; color: var(--no); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.removed s { text-decoration-thickness: 1.5px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-3); align-items: center; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
+
+/* ---------- frase y veredicto ---------- */
+.ask { display: flex; gap: 8px; }
+.ask input { flex: 1; min-width: 0; font-size: 16px; }
+.verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; padding: 14px 16px; border-radius: var(--radius);
+  background: var(--paper); border: 1px solid var(--rule); }
+.pill { font: 700 22px/1 var(--f-display); padding: 8px 16px; border-radius: 999px; letter-spacing: 0.02em; }
+.pill.yes { background: var(--yes-soft); color: var(--yes); }
+.pill.no { background: var(--no-soft); color: var(--no); }
+.metric { display: grid; gap: 2px; min-width: 0; }
+.metric .v { font: 600 17px var(--f-mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.metric .v.amb { color: var(--left); }
+.toks { display: flex; flex-wrap: wrap; gap: 4px; }
+.toks code { background: var(--term-soft); color: var(--term); border-radius: 5px; padding: 1px 7px; font-size: 13px; }
+
+/* ---------- pirámide CYK ---------- */
+.ctrls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctrls .grow { flex: 1; }
+.pyr-scroll { overflow-x: auto; padding: 4px 2px 6px; }
+.pyr { display: grid; gap: 5px; min-width: min-content; margin: 0 auto; }
+.cell { border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); min-height: 52px; padding: 16px 4px 5px;
+  position: relative; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 3px;
+  transition: background-color .2s, border-color .2s, box-shadow .2s; }
+.cell .ix { position: absolute; top: 3px; left: 6px; font: 500 9.5px var(--f-mono); color: var(--ink-3); }
+.cell .empty { color: var(--ink-3); font-family: var(--f-mono); font-size: 13px; }
+.cell.pending { background: transparent; border-style: dashed; }
+.cell.pending > :not(.ix) { visibility: hidden; }
+.cell.cur { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.cell.sel { border-color: var(--accent); background: var(--accent-soft); }
+.cell.srcL { border-color: var(--left); background: var(--left-soft); box-shadow: 0 0 0 1px var(--left); }
+.cell.srcR { border-color: var(--right); background: var(--right-soft); box-shadow: 0 0 0 1px var(--right); }
+.cell.apex.ok { border-color: var(--yes); border-width: 2px; }
+.cell.apex.bad { border-color: var(--no); border-width: 2px; border-style: solid; }
+.nt { border: 0; border-radius: 5px; padding: 1px 6px; font: 500 12.5px var(--f-mono); background: var(--paper); color: var(--ink); }
+.nt:hover { background: var(--accent-soft); }
+.nt.start { background: var(--yes-soft); color: var(--yes); font-weight: 600; }
+.nt.on { background: var(--accent); color: var(--accent-ink); }
+.tok { text-align: center; padding: 6px 2px 0; display: grid; gap: 1px; border-top: 2px solid transparent; }
+.tok code { font-size: 13.5px; color: var(--term); font-weight: 500; overflow-wrap: anywhere; }
+.tok .ix { font: 10px var(--f-mono); color: var(--ink-3); }
+.tok.hl { border-top-color: var(--accent); }
+.tok.hlL { border-top-color: var(--left); }
+.tok.hlR { border-top-color: var(--right); }
+.info { border-top: 1px solid var(--rule); padding-top: 12px; display: grid; gap: 8px; font-size: 14px; }
+.info h3 { margin: 0; font: 600 15px var(--f-body); }
+.info .words { font-family: var(--f-mono); color: var(--term); }
+.splits { display: grid; gap: 4px; }
+.split { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; align-items: baseline; text-align: left;
+  border: 1px solid var(--rule); background: var(--panel); border-radius: 8px; padding: 6px 10px; font-size: 13.5px; }
+.split:hover { border-color: var(--accent); }
+.split[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.split .k { font: 600 12px var(--f-mono); color: var(--ink-3); }
+.split .body { min-width: 0; overflow-wrap: anywhere; font-family: var(--f-mono); font-size: 13px; }
+.split .L { color: var(--left); font-weight: 600; }
+.split .R { color: var(--right); font-weight: 600; }
+.split .res { font-weight: 600; }
+.split .none { color: var(--ink-3); }
+
+/* ---------- árbol ---------- */
+.tree-scroll { overflow-x: auto; border-radius: 8px; background: var(--paper); border: 1px solid var(--rule); }
+.tree-scroll svg { display: block; margin: 0 auto; }
+svg .edge { stroke: var(--ink-3); stroke-width: 1.4; fill: none; }
+svg .n-nt rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.2; }
+svg .n-nt text { fill: var(--ink); font: 600 13px var(--f-mono); }
+svg .n-aux rect { fill: var(--panel); stroke: var(--ink-3); stroke-dasharray: 3 2; }
+svg .n-aux text { fill: var(--ink-2); font: 500 12px var(--f-mono); }
+svg .n-t rect { fill: var(--term-soft); stroke: var(--term); stroke-width: 1.2; }
+svg .n-t text { fill: var(--term); font: 600 13px var(--f-mono); }
+svg .n-eps text { fill: var(--ink-3); font: italic 14px var(--f-body); }
+svg .node { cursor: pointer; }
+svg .node.on rect { stroke-width: 2.6; }
+svg .node.on.n-nt rect, svg .node.on.n-aux rect { fill: var(--accent); }
+svg .node.on.n-nt text, svg .node.on.n-aux text { fill: var(--accent-ink); }
+svg text { text-anchor: middle; dominant-baseline: central; }
+
+/* ---------- lote ---------- */
+.batch-grid { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .batch-grid { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); } }
+.tbl-scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th { text-align: left; font: 600 11px var(--f-body); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3);
+  padding: 6px 8px; border-bottom: 1px solid var(--rule); }
+td { padding: 6px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+td.f { font-family: var(--f-mono); }
+tr.clk { cursor: pointer; }
+tr.clk:hover td { background: var(--accent-soft); }
+.tag { font: 600 12px var(--f-mono); padding: 1px 7px; border-radius: 999px; }
+.tag.yes { background: var(--yes-soft); color: var(--yes); }
+.tag.no { background: var(--no-soft); color: var(--no); }
+.ok { color: var(--yes); font-weight: 600; }
+.bad { color: var(--no); font-weight: 600; }
+footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
+
+@media (max-width: 520px) {
+  .card { padding: 14px; }
+  .pill { font-size: 19px; }
+}
+@media (prefers-reduced-motion: reduce) { .cell { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Laboratorio <span class="sub">CYK</span></h1>
+      <p>Convierte una gramática libre de contexto a Forma Normal de Chomsky y decide con programación dinámica si una frase pertenece al lenguaje. Proyecto 2, Teoría de la Computación, UVG.</p>
+    </div>
+    <span class="engine" id="engine"><span class="dot"></span><span id="engineTxt">Motor: JavaScript en el navegador</span></span>
+  </header>
+
+  <div class="row2">
+    <!-- Gramática -->
+    <section class="card" aria-labelledby="h-gram">
+      <div class="card-head">
+        <h2 id="h-gram">Gramática</h2>
+        <span class="eyebrow" id="gramFile">grammars/ingles.txt</span>
+      </div>
+      <div class="chips" id="presets" role="group" aria-label="Gramáticas de ejemplo"></div>
+      <textarea id="grammar" spellcheck="false" aria-label="Gramática" autocapitalize="off" autocorrect="off"></textarea>
+      <p class="hint">Una regla por línea, con <code>-&gt;</code> o <code>→</code> y alternativas con <code>|</code>. La cadena vacía se escribe <code>e</code> o <code>ε</code>. El inicial es el lado izquierdo de la primera regla.</p>
+      <div class="err" id="gramErr" hidden></div>
+      <div class="stats" id="gramStats"></div>
+    </section>
+
+    <!-- CNF -->
+    <section class="card" aria-labelledby="h-cnf">
+      <div class="card-head">
+        <h2 id="h-cnf">Forma Normal de Chomsky</h2>
+        <span class="muted" id="cnfTime"></span>
+      </div>
+      <div class="steps" id="steps" role="tablist" aria-label="Pasos de la conversión"></div>
+      <div class="card-head">
+        <div class="steptitle" id="stepTitle"></div>
+        <div class="seg">
+          <button type="button" id="stepPrev" aria-label="Paso anterior">‹</button>
+          <button type="button" id="stepNext" aria-label="Paso siguiente">›</button>
+        </div>
+      </div>
+      <ul class="notes" id="stepNotes"></ul>
+      <div class="rules" id="stepRules"></div>
+      <div class="removed" id="stepRemoved" hidden></div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--right-soft);box-shadow:inset 0 0 0 1px var(--right)"></span>regla nueva en este paso</span>
+        <span><span class="sw" style="background:var(--no-soft);box-shadow:inset 0 0 0 1px var(--no)"></span>regla eliminada</span>
+        <span><span class="tm mono">terminal</span></span>
+      </div>
+    </section>
+  </div>
+
+  <!-- Frase -->
+  <section class="card" aria-labelledby="h-frase">
+    <div class="card-head"><h2 id="h-frase">Frase</h2><span class="muted">w ∈ L(G)?</span></div>
+    <form class="ask" id="askForm">
+      <input type="text" id="sentence" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Frase a analizar">
+      <button class="btn primary" type="submit">Analizar</button>
+    </form>
+    <div class="chips" id="exYes" aria-label="Ejemplos que sí están en el lenguaje"></div>
+    <div class="chips" id="exNo" aria-label="Ejemplos que no están en el lenguaje"></div>
+    <div class="verdict" id="verdict" hidden></div>
+    <div class="err" id="tokErr" hidden></div>
+  </section>
+
+  <!-- Tabla CYK -->
+  <section class="card" aria-labelledby="h-tabla" id="tablaCard">
+    <div class="card-head">
+      <h2 id="h-tabla">Tabla de programación dinámica</h2>
+      <span class="muted">celda [i, l]: subcadena que empieza en i con longitud l</span>
+    </div>
+    <div class="ctrls">
+      <button class="btn" type="button" id="play">▶ Animar llenado</button>
+      <button class="btn" type="button" id="stepBtn">Paso</button>
+      <button class="btn" type="button" id="fillAll">Mostrar todo</button>
+      <span class="grow"></span>
+      <span class="muted mono" id="progress"></span>
+    </div>
+    <div class="pyr-scroll"><div class="pyr" id="pyr"></div></div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)"></span>celda seleccionada</span>
+      <span><span class="sw" style="background:var(--left-soft);box-shadow:inset 0 0 0 1px var(--left)"></span>parte izquierda (B)</span>
+      <span><span class="sw" style="background:var(--right-soft);box-shadow:inset 0 0 0 1px var(--right)"></span>parte derecha (C)</span>
+      <span>Toque un símbolo para ver de dónde salió.</span>
+    </div>
+    <div class="info" id="info"></div>
+  </section>
+
+  <!-- Árbol -->
+  <section class="card" aria-labelledby="h-tree" id="treeCard">
+    <div class="card-head">
+      <h2 id="h-tree">Parse tree</h2>
+      <div class="ctrls">
+        <div class="seg" role="group" aria-label="Tipo de árbol">
+          <button type="button" id="kOrig" aria-pressed="true">Gramática original</button>
+          <button type="button" id="kCnf" aria-pressed="false">CNF</button>
+        </div>
+        <div class="seg" id="treeNav" hidden>
+          <button type="button" id="tPrev" aria-label="Árbol anterior">‹</button>
+          <button type="button" id="tLbl" disabled style="cursor:default"></button>
+          <button type="button" id="tNext" aria-label="Árbol siguiente">›</button>
+        </div>
+      </div>
+    </div>
+    <p class="hint" id="treeHint"></p>
+    <div class="tree-scroll" id="treeBox"></div>
+  </section>
+
+  <!-- Lote -->
+  <section class="card" aria-labelledby="h-lote">
+    <div class="card-head"><h2 id="h-lote">Lote de pruebas</h2><span class="muted">las mismas frases de pruebas/*.txt</span></div>
+    <div class="batch-grid">
+      <div style="display:grid;gap:8px;align-content:start;min-width:0">
+        <textarea id="batchTxt" spellcheck="false" aria-label="Frases del lote" style="min-height:260px"></textarea>
+        <p class="hint">Una frase por línea. Las líneas <code># SÍ</code> y <code># NO</code> marcan el resultado esperado.</p>
+        <div><button class="btn primary" type="button" id="runBatch">Correr lote</button></div>
+      </div>
+      <div class="tbl-scroll" id="batchOut"><p class="muted">Corra el lote para ver la tabla de resultados.</p></div>
+    </div>
+  </section>
+
+  <footer>Proyecto 2 · Teoría de la Computación, UVG · CYK O(n³·|G|) · Los tiempos son el promedio de varias corridas del llenado de la tabla</footer>
+</div>
+
+<script src="cyk-engine.js"></script>
+<script src="presets.js"></script>
+<script>
+(() => {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const PRESETS = window.CYK_PRESETS || [];
+
+  const S = {
+    engine: "js", preset: PRESETS[0] ? PRESETS[0].id : null,
+    base: null, step: 6, out: null,
+    order: [], reveal: 0, timer: null,
+    sel: null,            // {i, l, a, bp, k}
+    treeIdx: 0, treeKind: "orig", nodeOn: null,
+  };
+
+  // ------------------------------------------------------------ motor
+  async function analyze(grammar, sentence) {
+    if (S.engine === "python") {
+      try {
+        const r = await fetch("api/analyze", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ grammar, sentence, maxTrees: 20 }) });
+        if (r.ok) return await r.json();
+      } catch (e) { /* cae al motor JS */ }
+      S.engine = "js"; renderEngine();
+    }
+    return window.CYKEngine.analyze(grammar, sentence, 20);
+  }
+  async function detectEngine() {
+    try {
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 900);
+      const r = await fetch("api/ping", { signal: ctl.signal });
+      clearTimeout(t);
+      if (r.ok) { const j = await r.json(); if (j && j.engine === "python") S.engine = "python"; }
+    } catch (e) { /* sin servidor: motor JS */ }
+    renderEngine();
+  }
+  function renderEngine() {
+    $("#engine").classList.toggle("py", S.engine === "python");
+    $("#engineTxt").textContent = S.engine === "python"
+      ? "Motor: Python (app.py)" : "Motor: JavaScript en el navegador";
+    $("#engine").title = S.engine === "python"
+      ? "El análisis lo hace el mismo código Python de main.py"
+      : "Traducción del motor Python, verificada salida por salida contra él";
+  }
+
+  // ------------------------------------------------------------ formato
+  function fmtNs(ns) {
+    if (ns < 1000) return ns.toFixed(0) + " ns";
+    if (ns < 1e6) return (ns / 1e3).toFixed(ns < 1e4 ? 2 : 1) + " µs";
+    if (ns < 1e9) return (ns / 1e6).toFixed(3) + " ms";
+    return (ns / 1e9).toFixed(3) + " s";
+  }
+  const group = (s) => s.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  const words = (i, l) => S.out.result.tokens.slice(i, i + l).join(" ");
+
+  // ------------------------------------------------------------ gramática
+  function renderPresets() {
+    $("#presets").innerHTML = PRESETS.map((p) =>
+      `<button type="button" class="chip" data-id="${p.id}" aria-pressed="${p.id === S.preset}">${esc(p.label)}</button>`).join("");
+  }
+  function loadPreset(id, keepSentence) {
+    const p = PRESETS.find((x) => x.id === id);
+    if (!p) return;
+    S.preset = id;
+    renderPresets();
+    $("#grammar").value = p.grammar;
+    $("#gramFile").textContent = p.file;
+    renderExamples(p);
+    $("#batchTxt").value = "# SÍ\n" + p.yes.join("\n") + "\n# NO\n" + p.no.join("\n");
+    $("#batchOut").innerHTML = '<p class="muted">Corra el lote para ver la tabla de resultados.</p>';
+    if (!keepSentence) $("#sentence").value = p.yes[0] || "";
+    convert(true);
+  }
+  function renderExamples(p) {
+    const chip = (s, cls) => `<button type="button" class="chip ex ${cls}" data-s="${esc(s)}">${esc(s)}</button>`;
+    $("#exYes").innerHTML = p ? `<span class="eyebrow" style="align-self:center;margin-right:4px">Sí</span>` + p.yes.map((s) => chip(s, "y")).join("") : "";
+    $("#exNo").innerHTML = p ? `<span class="eyebrow" style="align-self:center;margin-right:4px">No</span>` + p.no.map((s) => chip(s, "n")).join("") : "";
+  }
+
+  let convTimer = null;
+  async function convert(runSentence) {
+    const text = $("#grammar").value;
+    const out = await analyze(text, null);
+    if (out.error) {
+      $("#gramErr").hidden = false; $("#gramErr").textContent = out.error;
+      return;
+    }
+    $("#gramErr").hidden = true;
+    S.base = out;
+    const o = out.original, c = out.cnf;
+    $("#gramStats").innerHTML =
+      `<span>Original: <b>${o.nonterminals.length}</b> no terminales, <b>${o.terminals.length}</b> terminales, <b>${o.size}</b> producciones</span>` +
+      `<span>CNF: <b>${c.nonterminals.length}</b> no terminales, <b>${c.size}</b> producciones, inicial <b class="mono">${esc(c.start)}</b></span>`;
+    $("#cnfTime").textContent = "conversión en " + fmtNs(out.cnfNs);
+    renderSteps();
+    if (runSentence) run();
+  }
+
+  // ------------------------------------------------------------ pasos CNF
+  const ruleKeys = (st) => { const s = new Set(); for (const r of st.rules) for (const a of r.alts) s.add(r.lhs + "\u0000" + a.join(" ")); return s; };
+  function changed(i) {
+    if (i === 0) return false;
+    const a = ruleKeys(S.base.steps[i - 1]), b = ruleKeys(S.base.steps[i]);
+    if (a.size !== b.size) return true;
+    for (const k of a) if (!b.has(k)) return true;
+    return S.base.steps[i - 1].start !== S.base.steps[i].start;
+  }
+  function renderSteps() {
+    const steps = S.base.steps;
+    $("#steps").innerHTML = steps.map((st, i) =>
+      `<button type="button" role="tab" class="step${changed(i) ? " changed" : ""}" data-i="${i}" aria-pressed="${i === S.step}" aria-selected="${i === S.step}">` +
+      `<span class="num">${i}</span><span class="k">${st.key}</span></button>`).join("");
+    const st = steps[S.step], prev = S.step > 0 ? steps[S.step - 1] : null;
+    $("#stepTitle").textContent = S.step === steps.length - 1 ? `${st.title} · resultado final en CNF` : st.title;
+    $("#stepNotes").innerHTML = (st.notes.length ? st.notes : ["La gramática tal como está en el archivo."]).map((n) => `<li>${esc(n)}</li>`).join("");
+    const nts = new Set(st.rules.map((r) => r.lhs));
+    const prevKeys = prev ? ruleKeys(prev) : null;
+    const prevLhs = prev ? new Set(prev.rules.map((r) => r.lhs)) : null;
+    const sym = (s) => nts.has(s) ? esc(s) : `<span class="tm">${esc(s)}</span>`;
+    const lw = Math.max(2, ...st.rules.map((r) => [...r.lhs].length)) + 1;
+    $("#stepRules").style.setProperty("--lw", lw + "ch");
+    $("#stepRules").innerHTML = st.rules.map((r) => {
+      const alts = r.alts.map((a) => {
+        const isNew = prevKeys && !prevKeys.has(r.lhs + "\u0000" + a.join(" "));
+        const body = a.length ? a.map(sym).join(" ") : '<span class="eps">ε</span>';
+        return `<span class="alt${isNew ? " add" : ""}">${body}</span>`;
+      }).join('<span class="bar">|</span>');
+      const isNewLhs = prevLhs && !prevLhs.has(r.lhs);
+      return `<div class="rule"><span class="lhs${isNewLhs ? " new" : ""}">${esc(r.lhs)}</span><span class="arrow">→</span><span class="alts">${alts}</span></div>`;
+    }).join("");
+    if (prev) {
+      const cur = ruleKeys(st);
+      const gone = [];
+      for (const r of prev.rules) for (const a of r.alts) if (!cur.has(r.lhs + "\u0000" + a.join(" "))) gone.push(`${r.lhs} → ${a.length ? a.join(" ") : "ε"}`);
+      $("#stepRemoved").hidden = !gone.length;
+      $("#stepRemoved").innerHTML = gone.length ? `<span class="eyebrow" style="color:inherit">Se quitaron</span>` + gone.map((g) => `<s>${esc(g)}</s>`).join("") : "";
+    } else $("#stepRemoved").hidden = true;
+    $("#stepPrev").disabled = S.step === 0;
+    $("#stepNext").disabled = S.step === steps.length - 1;
+  }
+
+  // ------------------------------------------------------------ análisis
+  async function run() {
+    stopAnim();
+    const s = $("#sentence").value;
+    S.out = await analyze($("#grammar").value, s);
+    if (S.out.error) return;
+    const r = S.out.result;
+    S.sel = null; S.treeIdx = 0; S.nodeOn = null;
+    S.order = [];
+    if (r.tokens) { const n = r.tokens.length; for (let l = 1; l <= n; l++) for (let i = 0; i <= n - l; i++) S.order.push([i, l]); }
+    S.reveal = S.order.length;
+    if (r.tokens && r.tokens.length) {
+      const n = r.tokens.length;
+      S.sel = { i: 0, l: n, a: r.accepted ? S.out.cnf.start : null, bp: 0 };
+      setSplitFromSel();
+    }
+    renderVerdict(); renderPyr(); renderInfo(); renderTree();
+  }
+
+  function renderVerdict() {
+    const r = S.out.result, v = $("#verdict");
+    $("#tokErr").hidden = !r.tokenError;
+    if (r.tokenError) $("#tokErr").textContent = r.tokenError + ". Como no pertenece al alfabeto Σ, la respuesta es NO sin llenar la tabla.";
+    v.hidden = false;
+    const amb = BigInt(r.treeCount) > 1n;
+    const toks = r.tokens ? (r.tokens.length ? r.tokens.map((t) => `<code>${esc(t)}</code>`).join("") : '<span class="eps">ε (cadena vacía)</span>') : "n/d";
+    v.innerHTML =
+      `<span class="pill ${r.accepted ? "yes" : "no"}">${r.accepted ? "SÍ" : "NO"}</span>` +
+      `<div class="metric"><span class="eyebrow">Tiempo CYK</span><span class="v">${r.tokens ? fmtNs(r.ns) : "n/d"}</span>` +
+      `<span class="muted">${r.tokens ? `promedio de ${r.reps} corrida${r.reps === 1 ? "" : "s"} · primera: ${fmtNs(r.firstNs)}` : "fuera del alfabeto"}</span></div>` +
+      `<div class="metric"><span class="eyebrow">n</span><span class="v">${r.tokens ? r.tokens.length : "n/d"}</span><span class="muted">tokens</span></div>` +
+      `<div class="metric"><span class="eyebrow">Árboles</span><span class="v${amb ? " amb" : ""}">${group(r.treeCount)}</span>` +
+      `<span class="muted">${amb ? "frase ambigua" : r.accepted ? "derivación única" : "no hay derivación"}</span></div>` +
+      `<div class="metric" style="flex:1 1 220px"><span class="eyebrow">Tokens</span><div class="toks">${toks}</div></div>`;
+  }
+
+  // ------------------------------------------------------------ pirámide
+  const cellOf = (i, l) => S.out.result.table[l - 1][i];
+  const revealed = (i, l) => { const idx = S.order.findIndex(([a, b]) => a === i && b === l); return idx < S.reveal; };
+  function renderPyr() {
+    const r = S.out.result, box = $("#pyr");
+    const ctrlsOn = r.tokens && r.tokens.length > 0;
+    for (const id of ["#play", "#stepBtn", "#fillAll"]) $(id).disabled = !ctrlsOn;
+    if (!r.tokens) { box.style.gridTemplateColumns = "1fr"; box.innerHTML = '<p class="muted">No se llenó la tabla: hay un símbolo fuera del alfabeto.</p>'; $("#progress").textContent = ""; return; }
+    const n = r.tokens.length;
+    if (!n) {
+      box.style.gridTemplateColumns = "1fr";
+      box.innerHTML = `<p class="muted">Cadena vacía: el CYK no llena tabla; w = ε se acepta solo si existe ${esc(S.out.cnf.start)} → ε. ${r.accepted ? "Sí existe." : "No existe."}</p>`;
+      $("#progress").textContent = "";
+      return;
+    }
+    const half = n > 12 ? 30 : 36;
+    box.style.gridTemplateColumns = `repeat(${2 * n}, minmax(${half}px, 1fr))`;
+    const start = S.out.cnf.start;
+    const cur = S.reveal > 0 && S.reveal < S.order.length ? S.order[S.reveal - 1] : null;
+    let html = "";
+    const L = S.sel && S.sel.split ? S.sel.split : null;
+    for (let l = n; l >= 1; l--) {
+      for (let i = 0; i <= n - l; i++) {
+        const cls = ["cell"];
+        const vis = revealed(i, l);
+        if (!vis) cls.push("pending");
+        if (cur && cur[0] === i && cur[1] === l) cls.push("cur");
+        if (S.sel && S.sel.i === i && S.sel.l === l) cls.push("sel");
+        if (L && L[0][0] === i && L[0][1] === l) cls.push("srcL");
+        if (L && L[1][0] === i && L[1][1] === l) cls.push("srcR");
+        if (l === n && S.reveal === S.order.length) cls.push("apex", r.accepted ? "ok" : "bad");
+        const cell = cellOf(i, l);
+        const inner = cell.length
+          ? cell.map(([a]) => {
+              const on = S.sel && S.sel.i === i && S.sel.l === l && S.sel.a === a;
+              return `<button type="button" class="nt${a === start && l === n ? " start" : ""}${on ? " on" : ""}" data-i="${i}" data-l="${l}" data-a="${esc(a)}">${esc(a)}</button>`;
+            }).join("")
+          : '<span class="empty">∅</span>';
+        html += `<div class="${cls.join(" ")}" data-i="${i}" data-l="${l}" style="grid-column:${2 * i + l} / span 2;grid-row:${n - l + 1}" title="[${i}, ${l}]: «${esc(words(i, l))}»"><span class="ix">${i},${l}</span>${inner}</div>`;
+      }
+    }
+    const span = S.sel ? [S.sel.i, S.sel.i + S.sel.l] : null;
+    r.tokens.forEach((t, i) => {
+      let c = "tok";
+      if (L && i >= L[0][0] && i < L[0][0] + L[0][1]) c += " hlL";
+      else if (L && i >= L[1][0] && i < L[1][0] + L[1][1]) c += " hlR";
+      else if (span && i >= span[0] && i < span[1]) c += " hl";
+      html += `<div class="${c}" style="grid-column:${2 * i + 1} / span 2;grid-row:${n + 1}"><code>${esc(t)}</code><span class="ix">${i}</span></div>`;
+    });
+    box.innerHTML = html;
+    $("#progress").textContent = S.reveal < S.order.length ? `celda ${S.reveal} de ${S.order.length}` : `${S.order.length} celdas · n = ${n}`;
+  }
+
+  // ------------------------------------------------------------ explicación
+  function splitInfo(i, l) {
+    const rows = [];
+    const cell = cellOf(i, l);
+    for (let k = 1; k < l; k++) {
+      const left = cellOf(i, k).map((x) => x[0]), right = cellOf(i + k, l - k).map((x) => x[0]);
+      const made = [];
+      for (const [a, backs] of cell) for (const b of backs) if (b[0] === k) made.push(`${a} → ${b[1]} ${b[2]}`);
+      rows.push({ k, left, right, made });
+    }
+    return rows;
+  }
+  function renderInfo() {
+    const box = $("#info"), r = S.out.result;
+    if (!r.tokens || !r.tokens.length || !S.sel) { box.innerHTML = ""; return; }
+    const { i, l, a } = S.sel;
+    if (!revealed(i, l)) { box.innerHTML = '<p class="muted">Esa celda todavía no se ha calculado.</p>'; return; }
+    const cell = cellOf(i, l);
+    let html = `<h3>Celda [${i}, ${l}] = ${cell.length ? "{" + cell.map((x) => esc(x[0])).join(", ") + "}" : "∅"} · <span class="words">«${esc(words(i, l))}»</span></h3>`;
+    if (a) {
+      const entry = cell.find((x) => x[0] === a);
+      if (entry) {
+        html += `<p class="hint"><b class="mono">${esc(a)}</b> está en esta celda por ${entry[1].length === 1 ? "esta regla" : entry[1].length + " caminos"}:</p><div class="splits">`;
+        entry[1].forEach((b, idx) => {
+          const pressed = S.sel.bp === idx;
+          if (b[0] === null) {
+            html += `<button type="button" class="split" data-bp="${idx}" aria-pressed="${pressed}"><span class="k">l = 1</span><span class="body"><span class="res">${esc(a)}</span> → <span class="tm">${esc(b[1])}</span></span></button>`;
+          } else {
+            const k = b[0];
+            html += `<button type="button" class="split" data-bp="${idx}" aria-pressed="${pressed}"><span class="k">k = ${k}</span><span class="body"><span class="res">${esc(a)}</span> → <span class="L">${esc(b[1])}</span> <span class="R">${esc(b[2])}</span>` +
+              `   <span class="muted">«${esc(words(i, k))}» [${i},${k}] + «${esc(words(i + k, l - k))}» [${i + k},${l - k}]</span></span></button>`;
+          }
+        });
+        html += "</div>";
+      }
+    }
+    if (l === 1) {
+      html += `<p class="hint">Caso base: se buscan las reglas <span class="mono">A → ${esc(r.tokens[i])}</span>. ${cell.length ? "" : "No hay ninguna, así que la celda queda vacía."}</p>`;
+    } else if (!a) {
+      html += `<p class="hint">Se prueban los ${l - 1} cortes posibles: la parte izquierda de longitud k y la derecha de longitud ${l} − k. Para cada par B, C se buscan reglas A → B C.</p><div class="splits">`;
+      for (const row of splitInfo(i, l)) {
+        const pressed = S.sel.k === row.k;
+        html += `<button type="button" class="split" data-k="${row.k}" aria-pressed="${pressed}"><span class="k">k = ${row.k}</span><span class="body">` +
+          `<span class="L">${row.left.length ? "{" + row.left.map(esc).join(", ") + "}" : "∅"}</span> × <span class="R">${row.right.length ? "{" + row.right.map(esc).join(", ") + "}" : "∅"}</span> ⇒ ` +
+          (row.made.length ? `<span class="res">${row.made.map(esc).join(", ")}</span>` : `<span class="none">ninguna regla</span>`) + `</span></button>`;
+      }
+      html += "</div>";
+    }
+    if (l === r.tokens.length && i === 0 && S.reveal === S.order.length) {
+      html += `<p class="hint">${r.accepted ? `El inicial <b class="mono">${esc(S.out.cnf.start)}</b> está en la celda superior, así que w ∈ L(G).` : `El inicial <b class="mono">${esc(S.out.cnf.start)}</b> no está en la celda superior, así que w ∉ L(G).`}</p>`;
+    }
+    box.innerHTML = html;
+  }
+  function setSplitFromSel() {
+    const s = S.sel;
+    if (!s) return;
+    s.split = null;
+    if (s.a) {
+      const entry = cellOf(s.i, s.l).find((x) => x[0] === s.a);
+      const b = entry && entry[1][s.bp || 0];
+      if (b && b[0] !== null) s.split = [[s.i, b[0]], [s.i + b[0], s.l - b[0]]];
+    } else if (s.k) {
+      s.split = [[s.i, s.k], [s.i + s.k, s.l - s.k]];
+    }
+  }
+  function select(sel) { S.sel = sel; setSplitFromSel(); renderPyr(); renderInfo(); }
+
+  // ------------------------------------------------------------ animación
+  function stopAnim() { if (S.timer) { clearInterval(S.timer); S.timer = null; } $("#play").textContent = "▶ Animar llenado"; }
+  function stepOnce() {
+    if (S.reveal >= S.order.length) { stopAnim(); return false; }
+    S.reveal++;
+    const [i, l] = S.order[S.reveal - 1];
+    const cell = cellOf(i, l);
+    S.sel = { i, l, a: null, bp: 0, k: null };
+    if (l > 1) { const firstK = splitInfo(i, l).find((r) => r.made.length); S.sel.k = firstK ? firstK.k : 1; }
+    if (S.reveal === S.order.length) { S.sel = { i: 0, l: S.out.result.tokens.length, a: S.out.result.accepted ? S.out.cnf.start : null, bp: 0 }; stopAnim(); }
+    setSplitFromSel(); renderPyr(); renderInfo();
+    return cell;
+  }
+
+  // ------------------------------------------------------------ árbol
+  // Símbolos que no existen en la gramática original (S0, T_a, auxiliares de BIN)
+  const isAux = (sym) => !S.out.original.nonterminals.includes(sym);
+  function layoutTree(t) {
+    const nodes = [], edges = [];
+    let cursor = 16, leafIdx = 0, maxDepth = 0;
+    const W = (label, eps) => eps ? 26 : Math.max(46, [...label].length * 8.1 + 22);
+    (function depth(t, d) { maxDepth = Math.max(maxDepth, d); if (t.c) t.c.forEach((c) => depth(c, d + 1)); })(t, 0);
+    function rec(t, d) {
+      const nd = { d };
+      if (t.c) {
+        const kids = t.c.map((c) => rec(c, d + 1));
+        nd.x = (kids[0].x + kids[kids.length - 1].x) / 2;
+        nd.label = t.s; nd.kind = "nt";
+        const spans = kids.map((k) => k.span).filter(Boolean);
+        nd.span = spans.length ? [spans[0][0], spans[spans.length - 1][1]] : null;
+        kids.forEach((k) => edges.push([nd, k]));
+      } else if (t.e) {
+        nd.label = "ε"; nd.kind = "eps"; const w = W("", true); nd.x = cursor + w / 2; cursor += w + 6; nd.span = null;
+      } else {
+        nd.label = t.t; nd.kind = "t"; const w = W(t.t); nd.x = cursor + w / 2; cursor += w + 10;
+        nd.span = [leafIdx, leafIdx + 1]; leafIdx++; nd.d = maxDepth;
+      }
+      nd.w = nd.kind === "eps" ? 22 : W(nd.label);
+      nodes.push(nd);
+      return nd;
+    }
+    rec(t, 0);
+    // separar nodos internos que se encimen en la misma fila
+    const rows = new Map();
+    for (const nd of nodes) { if (!rows.has(nd.d)) rows.set(nd.d, []); rows.get(nd.d).push(nd); }
+    let width = cursor + 6;
+    for (const row of rows.values()) {
+      row.sort((a, b) => a.x - b.x);
+      for (let j = 1; j < row.length; j++) {
+        const need = row[j - 1].x + row[j - 1].w / 2 + 8 + row[j].w / 2;
+        if (row[j].x < need) row[j].x = need;
+      }
+      const last = row[row.length - 1]; width = Math.max(width, last.x + last.w / 2 + 16);
+    }
+    return { nodes, edges, width, height: (maxDepth + 1) * 64 + 24 };
+  }
+  function renderTree() {
+    const r = S.out.result, box = $("#treeBox");
+    $("#treeNav").hidden = true;
+    if (!r.accepted) {
+      box.innerHTML = `<p class="muted" style="padding:16px;margin:0">No hay parse tree: la frase no pertenece al lenguaje.</p>`;
+      $("#treeHint").textContent = ""; return;
+    }
+    const total = BigInt(r.treeCount);
+    if (r.trees.length > 1) {
+      $("#treeNav").hidden = false;
+      $("#tLbl").textContent = `${S.treeIdx + 1} / ${r.trees.length}${total > BigInt(r.trees.length) ? "+" : ""}`;
+    }
+    $("#kOrig").setAttribute("aria-pressed", S.treeKind === "orig");
+    $("#kCnf").setAttribute("aria-pressed", S.treeKind === "cnf");
+    $("#treeHint").textContent = S.treeKind === "orig"
+      ? "Reconstruido en términos de la gramática original, incluyendo las ε. Toque un nodo para ver qué parte de la frase cubre."
+      : "El árbol tal como sale del CYK. Los nodos punteados son símbolos que agregó la conversión (T_a, auxiliares de BIN).";
+    const t = r.trees[S.treeIdx][S.treeKind];
+    const L = layoutTree(t);
+    const y = (d) => 28 + d * 64;
+    let svg = `<svg width="${L.width}" height="${L.height}" viewBox="0 0 ${L.width} ${L.height}" role="img" aria-label="Parse tree">`;
+    for (const [a, b] of L.edges) svg += `<line class="edge" x1="${a.x}" y1="${y(a.d) + 13}" x2="${b.x}" y2="${y(b.d) - 13}"/>`;
+    L.nodes.forEach((nd, idx) => {
+      let cls = nd.kind === "t" ? "n-t" : nd.kind === "eps" ? "n-eps" : (S.treeKind === "cnf" && isAux(nd.label) ? "n-aux" : "n-nt");
+      const on = S.nodeOn === idx;
+      svg += `<g class="node ${cls}${on ? " on" : ""}" data-n="${idx}" tabindex="0" aria-label="${esc(nd.label)}">`;
+      if (nd.kind !== "eps") svg += `<rect x="${nd.x - nd.w / 2}" y="${y(nd.d) - 13}" width="${nd.w}" height="26" rx="${nd.kind === "t" ? 6 : 13}"/>`;
+      svg += `<text x="${nd.x}" y="${y(nd.d) + 0.5}">${esc(nd.label)}</text></g>`;
+    });
+    svg += "</svg>";
+    box.innerHTML = svg;
+    S.layout = L;
+  }
+  function pickNode(idx) {
+    const nd = S.layout.nodes[idx];
+    S.nodeOn = S.nodeOn === idx ? null : idx;
+    renderTree();
+    if (S.nodeOn !== null && nd.span) {
+      const [a, b] = nd.span, l = b - a;
+      const inCell = cellOf(a, l).some((x) => x[0] === nd.label);
+      select({ i: a, l, a: inCell ? nd.label : null, bp: 0, k: null });
+    }
+  }
+
+  // ------------------------------------------------------------ lote
+  async function runBatch() {
+    const lines = $("#batchTxt").value.split(/\r?\n/);
+    let expect = null;
+    const rows = [];
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) continue;
+      if (line.startsWith("#")) { expect = /S[IÍ]/i.test(line) ? true : /NO/i.test(line) ? false : null; continue; }
+      const out = await analyze($("#grammar").value, line);
+      if (out.error) { $("#batchOut").innerHTML = `<div class="err">${esc(out.error)}</div>`; return; }
+      rows.push({ s: line, r: out.result, expect });
+    }
+    const okCount = rows.filter((x) => x.expect === null || x.expect === x.r.accepted).length;
+    let html = `<table><thead><tr><th>Frase</th><th>n</th><th>Resultado</th><th>Tiempo CYK</th><th>Árboles</th><th>Esperado</th></tr></thead><tbody>`;
+    for (const x of rows) {
+      const r = x.r;
+      const match = x.expect === null ? '<span class="muted">sin marcar</span>' : x.expect === r.accepted ? '<span class="ok">✓</span>' : '<span class="bad">✗</span>';
+      html += `<tr class="clk" data-s="${esc(x.s)}"><td class="f">${esc(x.s)}</td><td>${r.tokens ? r.tokens.length : "n/d"}</td>` +
+        `<td><span class="tag ${r.accepted ? "yes" : "no"}">${r.accepted ? "SÍ" : "NO"}</span></td>` +
+        `<td>${r.tokens ? fmtNs(r.ns) : '<span class="muted">fuera de Σ</span>'}</td><td>${group(r.treeCount)}</td><td>${match}</td></tr>`;
+    }
+    html += `</tbody></table><p class="muted">${rows.filter((x) => x.r.accepted).length} aceptadas, ${rows.filter((x) => !x.r.accepted).length} rechazadas · ${okCount} de ${rows.length} coinciden con lo esperado. Toque una fila para analizarla.</p>`;
+    $("#batchOut").innerHTML = html;
+  }
+
+  // ------------------------------------------------------------ eventos
+  $("#presets").addEventListener("click", (e) => { const b = e.target.closest("[data-id]"); if (b) loadPreset(b.dataset.id); });
+  $("#grammar").addEventListener("input", () => {
+    if (S.preset) { S.preset = null; renderPresets(); $("#gramFile").textContent = "gramática editada"; }
+    clearTimeout(convTimer); convTimer = setTimeout(() => convert(true), 350);
+  });
+  $("#steps").addEventListener("click", (e) => { const b = e.target.closest("[data-i]"); if (b) { S.step = +b.dataset.i; renderSteps(); } });
+  $("#stepPrev").addEventListener("click", () => { if (S.step > 0) { S.step--; renderSteps(); } });
+  $("#stepNext").addEventListener("click", () => { if (S.step < S.base.steps.length - 1) { S.step++; renderSteps(); } });
+  $("#askForm").addEventListener("submit", (e) => { e.preventDefault(); run(); });
+  for (const id of ["#exYes", "#exNo"]) $(id).addEventListener("click", (e) => { const b = e.target.closest("[data-s]"); if (b) { $("#sentence").value = b.dataset.s; run(); } });
+  $("#pyr").addEventListener("click", (e) => {
+    const nt = e.target.closest(".nt");
+    if (nt) { select({ i: +nt.dataset.i, l: +nt.dataset.l, a: nt.dataset.a, bp: 0, k: null }); return; }
+    const c = e.target.closest(".cell");
+    if (c && !c.classList.contains("pending")) {
+      const i = +c.dataset.i, l = +c.dataset.l;
+      const firstK = l > 1 ? (splitInfo(i, l).find((r) => r.made.length) || { k: 1 }).k : null;
+      select({ i, l, a: null, bp: 0, k: firstK });
+    }
+  });
+  $("#info").addEventListener("click", (e) => {
+    const b = e.target.closest(".split");
+    if (!b || !S.sel) return;
+    if (b.dataset.bp !== undefined) S.sel.bp = +b.dataset.bp;
+    if (b.dataset.k !== undefined) S.sel.k = +b.dataset.k;
+    setSplitFromSel(); renderPyr(); renderInfo();
+  });
+  $("#play").addEventListener("click", () => {
+    if (S.timer) { stopAnim(); return; }
+    if (S.reveal >= S.order.length) S.reveal = 0;
+    $("#play").textContent = "❚❚ Pausa";
+    const speed = Math.max(140, Math.min(650, 5200 / S.order.length));
+    stepOnce();
+    S.timer = setInterval(stepOnce, speed);
+    $("#tablaCard").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  });
+  $("#stepBtn").addEventListener("click", () => { stopAnim(); if (S.reveal >= S.order.length) S.reveal = 0; stepOnce(); });
+  $("#fillAll").addEventListener("click", () => {
+    stopAnim(); S.reveal = S.order.length;
+    const n = S.out.result.tokens.length;
+    select({ i: 0, l: n, a: S.out.result.accepted ? S.out.cnf.start : null, bp: 0, k: null });
+  });
+  $("#kOrig").addEventListener("click", () => { S.treeKind = "orig"; S.nodeOn = null; renderTree(); });
+  $("#kCnf").addEventListener("click", () => { S.treeKind = "cnf"; S.nodeOn = null; renderTree(); });
+  $("#tPrev").addEventListener("click", () => { const n = S.out.result.trees.length; S.treeIdx = (S.treeIdx - 1 + n) % n; S.nodeOn = null; renderTree(); });
+  $("#tNext").addEventListener("click", () => { const n = S.out.result.trees.length; S.treeIdx = (S.treeIdx + 1) % n; S.nodeOn = null; renderTree(); });
+  $("#treeBox").addEventListener("click", (e) => { const g = e.target.closest(".node"); if (g) pickNode(+g.dataset.n); });
+  $("#treeBox").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { const g = e.target.closest(".node"); if (g) { e.preventDefault(); pickNode(+g.dataset.n); } } });
+  $("#runBatch").addEventListener("click", runBatch);
+  $("#batchOut").addEventListener("click", (e) => {
+    const tr = e.target.closest("tr[data-s]");
+    if (tr) { $("#sentence").value = tr.dataset.s; run(); $("#tablaCard").scrollIntoView({ block: "start" }); }
+  });
+
+  // ------------------------------------------------------------ inicio
+  renderEngine();
+  if (PRESETS.length) loadPreset(PRESETS[0].id);
+  detectEngine().then(() => { if (S.engine === "python") convert(true); });
+})();
+</script>

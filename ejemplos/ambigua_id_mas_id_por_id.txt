@@ -1,0 +1,39 @@
+Gramática: grammars/ambigua.txt
+  Original: 1 no terminales, 5 terminales, 4 producciones
+  CNF:      9 no terminales, 15 producciones, símbolo inicial E0  (conversión en 316.01 µs)
+
+=== w = id+id*id ================================================
+Tokens:    [id, +, id, *, id]  (n = 5)
+Resultado: SÍ
+Tiempo CYK: 30.63 µs
+Árboles de derivación: 2  (la frase es AMBIGUA)
+
+Parse tree #1 (gramática original)
+E
+├── E
+│   └── id
+├── +
+└── E
+    ├── E
+    │   └── id
+    ├── *
+    └── E
+        └── id
+[E [E id] + [E [E id] * [E id]]]
+  imagen: ejemplos/arboles/id_mas_id_por_id_1_original.png
+  imagen: ejemplos/arboles/id_mas_id_por_id_1_cnf.png
+
+Parse tree #2 (gramática original)
+E
+├── E
+│   ├── E
+│   │   └── id
+│   ├── +
+│   └── E
+│       └── id
+├── *
+└── E
+    └── id
+[E [E [E id] + [E id]] * [E id]]
+  imagen: ejemplos/arboles/id_mas_id_por_id_2_original.png
+  imagen: ejemplos/arboles/id_mas_id_por_id_2_cnf.png

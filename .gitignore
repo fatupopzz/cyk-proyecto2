@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Salidas generadas por main.py --png
+salida/
+
+# Sistema / editores
+.DS_Store
+.vscode/
+.idea/
+
+# Herramientas de asistentes (no van al repo)
+.claude/
+CLAUDE.md

@@ -1,0 +1,45 @@
+digraph ParseTree {
+  graph [ordering=out, nodesep=0.3, ranksep=0.45, fontname="Helvetica", labelloc=t, label="She eats a cake with a fork  (original)"];
+  node [fontname="Helvetica", fontsize=13];
+  edge [arrowhead=none, color="#555555"];
+  n0 [label="S", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n1 [label="NP", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n2 [label="she", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n1 -> n2;
+  n0 -> n1;
+  n3 [label="VP", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n4 [label="VP", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n5 [label="V", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n6 [label="eats", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n5 -> n6;
+  n4 -> n5;
+  n7 [label="NP", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n8 [label="Det", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n9 [label="a", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n8 -> n9;
+  n7 -> n8;
+  n10 [label="N", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n11 [label="cake", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n10 -> n11;
+  n7 -> n10;
+  n4 -> n7;
+  n3 -> n4;
+  n12 [label="PP", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n13 [label="P", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n14 [label="with", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n13 -> n14;
+  n12 -> n13;
+  n15 [label="NP", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n16 [label="Det", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n17 [label="a", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n16 -> n17;
+  n15 -> n16;
+  n18 [label="N", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n19 [label="fork", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n18 -> n19;
+  n15 -> n18;
+  n12 -> n15;
+  n3 -> n12;
+  n0 -> n3;
+  { rank=same; n2 n6 n9 n11 n14 n17 n19 }
+}

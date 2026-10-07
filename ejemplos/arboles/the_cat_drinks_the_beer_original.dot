@@ -1,0 +1,33 @@
+digraph ParseTree {
+  graph [ordering=out, nodesep=0.3, ranksep=0.45, fontname="Helvetica", labelloc=t, label="The cat drinks the beer  (original)"];
+  node [fontname="Helvetica", fontsize=13];
+  edge [arrowhead=none, color="#555555"];
+  n0 [label="S", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n1 [label="NP", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n2 [label="Det", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n3 [label="the", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n2 -> n3;
+  n1 -> n2;
+  n4 [label="N", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n5 [label="cat", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n4 -> n5;
+  n1 -> n4;
+  n0 -> n1;
+  n6 [label="VP", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n7 [label="V", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n8 [label="drinks", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n7 -> n8;
+  n6 -> n7;
+  n9 [label="NP", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n10 [label="Det", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n11 [label="the", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n10 -> n11;
+  n9 -> n10;
+  n12 [label="N", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n13 [label="beer", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n12 -> n13;
+  n9 -> n12;
+  n6 -> n9;
+  n0 -> n6;
+  { rank=same; n3 n5 n8 n11 n13 }
+}

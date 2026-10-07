@@ -1,0 +1,19 @@
+# ---- SÍ ----
+id
+id + id
+id * id
+(id+id)*id
+id+id*id
+((id))
+id*(id+id*id)+id
+(((id)+id)*(id))
+# ---- NO ----
+ε
+id +
++ id
+(id
+id id
+()
+id**id
+id+*id
+x + id

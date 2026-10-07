@@ -1,0 +1,69 @@
+Gramática: grammars/ingles.txt
+  Original: 8 no terminales, 21 terminales, 30 producciones
+  CNF:      8 no terminales, 30 producciones, símbolo inicial S  (conversión en 476.43 µs)
+
+=== w = She eats a cake with a fork =============================
+Tokens:    [she, eats, a, cake, with, a, fork]  (n = 7)
+Resultado: SÍ
+Tiempo CYK: 39.16 µs
+
+Tabla CYK  (fila l = longitud de la subcadena, columna = posición inicial)
++-----+-------+---------+-------+--------+--------+-------+--------+
+|     | 0:she | 1:eats  | 2:a   | 3:cake | 4:with | 5:a   | 6:fork |
++-----+-------+---------+-------+--------+--------+-------+--------+
+| l=7 | {S}   |         |       |        |        |       |        |
+| l=6 | ∅     | {VP}    |       |        |        |       |        |
+| l=5 | ∅     | ∅       | ∅     |        |        |       |        |
+| l=4 | {S}   | ∅       | ∅     | ∅      |        |       |        |
+| l=3 | ∅     | {VP}    | ∅     | ∅      | {PP}   |       |        |
+| l=2 | {S}   | ∅       | {NP}  | ∅      | ∅      | {NP}  |        |
+| l=1 | {NP}  | {V, VP} | {Det} | {N}    | {P}    | {Det} | {N}    |
++-----+-------+---------+-------+--------+--------+-------+--------+
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+S
+├── NP
+│   └── she
+└── VP
+    ├── VP
+    │   ├── V
+    │   │   └── eats
+    │   └── NP
+    │       ├── Det
+    │       │   └── a
+    │       └── N
+    │           └── cake
+    └── PP
+        ├── P
+        │   └── with
+        └── NP
+            ├── Det
+            │   └── a
+            └── N
+                └── fork
+[S [NP she] [VP [VP [V eats] [NP [Det a] [N cake]]] [PP [P with] [NP [Det a] [N fork]]]]]
+
+Parse tree (gramática en CNF)
+S
+├── NP
+│   └── she
+└── VP
+    ├── VP
+    │   ├── V
+    │   │   └── eats
+    │   └── NP
+    │       ├── Det
+    │       │   └── a
+    │       └── N
+    │           └── cake
+    └── PP
+        ├── P
+        │   └── with
+        └── NP
+            ├── Det
+            │   └── a
+            └── N
+                └── fork
+  imagen: ejemplos/arboles/she_eats_a_cake_with_a_fork_original.png
+  imagen: ejemplos/arboles/she_eats_a_cake_with_a_fork_cnf.png

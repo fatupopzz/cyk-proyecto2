@@ -1,0 +1,342 @@
+Gramática: grammars/expresiones.txt
+  Original: 5 no terminales, 5 terminales, 8 producciones
+  CNF:      13 no terminales, 24 producciones, símbolo inicial E0  (conversión en 494.81 µs)
+
+=== w = id ======================================================
+Tokens:    [id]  (n = 1)
+Resultado: SÍ
+Tiempo CYK: 6.39 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+E
+├── T
+│   ├── F
+│   │   └── id
+│   └── Y
+│       └── ε
+└── X
+    └── ε
+[E [T [F id] [Y ε]] [X ε]]
+
+=== w = id + id =================================================
+Tokens:    [id, +, id]  (n = 3)
+Resultado: SÍ
+Tiempo CYK: 19.58 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+E
+├── T
+│   ├── F
+│   │   └── id
+│   └── Y
+│       └── ε
+└── X
+    ├── +
+    ├── T
+    │   ├── F
+    │   │   └── id
+    │   └── Y
+    │       └── ε
+    └── X
+        └── ε
+[E [T [F id] [Y ε]] [X + [T [F id] [Y ε]] [X ε]]]
+
+=== w = id * id =================================================
+Tokens:    [id, *, id]  (n = 3)
+Resultado: SÍ
+Tiempo CYK: 14.93 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+E
+├── T
+│   ├── F
+│   │   └── id
+│   └── Y
+│       ├── *
+│       ├── F
+│       │   └── id
+│       └── Y
+│           └── ε
+└── X
+    └── ε
+[E [T [F id] [Y * [F id] [Y ε]]] [X ε]]
+
+=== w = (id+id)*id ==============================================
+Tokens:    [(, id, +, id, ), *, id]  (n = 7)
+Resultado: SÍ
+Tiempo CYK: 33.52 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+E
+├── T
+│   ├── F
+│   │   ├── (
+│   │   ├── E
+│   │   │   ├── T
+│   │   │   │   ├── F
+│   │   │   │   │   └── id
+│   │   │   │   └── Y
+│   │   │   │       └── ε
+│   │   │   └── X
+│   │   │       ├── +
+│   │   │       ├── T
+│   │   │       │   ├── F
+│   │   │       │   │   └── id
+│   │   │       │   └── Y
+│   │   │       │       └── ε
+│   │   │       └── X
+│   │   │           └── ε
+│   │   └── )
+│   └── Y
+│       ├── *
+│       ├── F
+│       │   └── id
+│       └── Y
+│           └── ε
+└── X
+    └── ε
+[E [T [F ( [E [T [F id] [Y ε]] [X + [T [F id] [Y ε]] [X ε]]] )] [Y * [F id] [Y ε]]] [X ε]]
+
+=== w = id+id*id ================================================
+Tokens:    [id, +, id, *, id]  (n = 5)
+Resultado: SÍ
+Tiempo CYK: 26.59 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+E
+├── T
+│   ├── F
+│   │   └── id
+│   └── Y
+│       └── ε
+└── X
+    ├── +
+    ├── T
+    │   ├── F
+    │   │   └── id
+    │   └── Y
+    │       ├── *
+    │       ├── F
+    │       │   └── id
+    │       └── Y
+    │           └── ε
+    └── X
+        └── ε
+[E [T [F id] [Y ε]] [X + [T [F id] [Y * [F id] [Y ε]]] [X ε]]]
+
+=== w = ((id)) ==================================================
+Tokens:    [(, (, id, ), )]  (n = 5)
+Resultado: SÍ
+Tiempo CYK: 20.42 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+E
+├── T
+│   ├── F
+│   │   ├── (
+│   │   ├── E
+│   │   │   ├── T
+│   │   │   │   ├── F
+│   │   │   │   │   ├── (
+│   │   │   │   │   ├── E
+│   │   │   │   │   │   ├── T
+│   │   │   │   │   │   │   ├── F
+│   │   │   │   │   │   │   │   └── id
+│   │   │   │   │   │   │   └── Y
+│   │   │   │   │   │   │       └── ε
+│   │   │   │   │   │   └── X
+│   │   │   │   │   │       └── ε
+│   │   │   │   │   └── )
+│   │   │   │   └── Y
+│   │   │   │       └── ε
+│   │   │   └── X
+│   │   │       └── ε
+│   │   └── )
+│   └── Y
+│       └── ε
+└── X
+    └── ε
+[E [T [F ( [E [T [F ( [E [T [F id] [Y ε]] [X ε]] )] [Y ε]] [X ε]] )] [Y ε]] [X ε]]
+
+=== w = id*(id+id*id)+id ========================================
+Tokens:    [id, *, (, id, +, id, *, id, ), +, id]  (n = 11)
+Resultado: SÍ
+Tiempo CYK: 77.24 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+E
+├── T
+│   ├── F
+│   │   └── id
+│   └── Y
+│       ├── *
+│       ├── F
+│       │   ├── (
+│       │   ├── E
+│       │   │   ├── T
+│       │   │   │   ├── F
+│       │   │   │   │   └── id
+│       │   │   │   └── Y
+│       │   │   │       └── ε
+│       │   │   └── X
+│       │   │       ├── +
+│       │   │       ├── T
+│       │   │       │   ├── F
+│       │   │       │   │   └── id
+│       │   │       │   └── Y
+│       │   │       │       ├── *
+│       │   │       │       ├── F
+│       │   │       │       │   └── id
+│       │   │       │       └── Y
+│       │   │       │           └── ε
+│       │   │       └── X
+│       │   │           └── ε
+│       │   └── )
+│       └── Y
+│           └── ε
+└── X
+    ├── +
+    ├── T
+    │   ├── F
+    │   │   └── id
+    │   └── Y
+    │       └── ε
+    └── X
+        └── ε
+[E [T [F id] [Y * [F ( [E [T [F id] [Y ε]] [X + [T [F id] [Y * [F id] [Y ε]]] [X ε]]] )] [Y ε]]] [X + [T [F id] [Y ε]] [X ε]]]
+
+=== w = (((id)+id)*(id)) ========================================
+Tokens:    [(, (, (, id, ), +, id, ), *, (, id, ), )]  (n = 13)
+Resultado: SÍ
+Tiempo CYK: 85.36 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+E
+├── T
+│   ├── F
+│   │   ├── (
+│   │   ├── E
+│   │   │   ├── T
+│   │   │   │   ├── F
+│   │   │   │   │   ├── (
+│   │   │   │   │   ├── E
+│   │   │   │   │   │   ├── T
+│   │   │   │   │   │   │   ├── F
+│   │   │   │   │   │   │   │   ├── (
+│   │   │   │   │   │   │   │   ├── E
+│   │   │   │   │   │   │   │   │   ├── T
+│   │   │   │   │   │   │   │   │   │   ├── F
+│   │   │   │   │   │   │   │   │   │   │   └── id
+│   │   │   │   │   │   │   │   │   │   └── Y
+│   │   │   │   │   │   │   │   │   │       └── ε
+│   │   │   │   │   │   │   │   │   └── X
+│   │   │   │   │   │   │   │   │       └── ε
+│   │   │   │   │   │   │   │   └── )
+│   │   │   │   │   │   │   └── Y
+│   │   │   │   │   │   │       └── ε
+│   │   │   │   │   │   └── X
+│   │   │   │   │   │       ├── +
+│   │   │   │   │   │       ├── T
+│   │   │   │   │   │       │   ├── F
+│   │   │   │   │   │       │   │   └── id
+│   │   │   │   │   │       │   └── Y
+│   │   │   │   │   │       │       └── ε
+│   │   │   │   │   │       └── X
+│   │   │   │   │   │           └── ε
+│   │   │   │   │   └── )
+│   │   │   │   └── Y
+│   │   │   │       ├── *
+│   │   │   │       ├── F
+│   │   │   │       │   ├── (
+│   │   │   │       │   ├── E
+│   │   │   │       │   │   ├── T
+│   │   │   │       │   │   │   ├── F
+│   │   │   │       │   │   │   │   └── id
+│   │   │   │       │   │   │   └── Y
+│   │   │   │       │   │   │       └── ε
+│   │   │   │       │   │   └── X
+│   │   │   │       │   │       └── ε
+│   │   │   │       │   └── )
+│   │   │   │       └── Y
+│   │   │   │           └── ε
+│   │   │   └── X
+│   │   │       └── ε
+│   │   └── )
+│   └── Y
+│       └── ε
+└── X
+    └── ε
+[E [T [F ( [E [T [F ( [E [T [F ( [E [T [F id] [Y ε]] [X ε]] )] [Y ε]] [X + [T [F id] [Y ε]] [X ε]]] )] [Y * [F ( [E [T [F id] [Y ε]] [X ε]] )] [Y ε]]] [X ε]] )] [Y ε]] [X ε]]
+
+=== w = ε =======================================================
+Tokens:    []  (n = 0)
+Resultado: NO
+Tiempo CYK: 2.67 µs
+
+=== w = id + ====================================================
+Tokens:    [id, +]  (n = 2)
+Resultado: NO
+Tiempo CYK: 5.85 µs
+
+=== w = + id ====================================================
+Tokens:    [+, id]  (n = 2)
+Resultado: NO
+Tiempo CYK: 5.54 µs
+
+=== w = (id =====================================================
+Tokens:    [(, id]  (n = 2)
+Resultado: NO
+Tiempo CYK: 3.94 µs
+
+=== w = id id ===================================================
+Tokens:    [id, id]  (n = 2)
+Resultado: NO
+Tiempo CYK: 6.17 µs
+
+=== w = () ======================================================
+Tokens:    [(, )]  (n = 2)
+Resultado: NO
+Tiempo CYK: 3.50 µs
+
+=== w = id**id ==================================================
+Tokens:    [id, *, *, id]  (n = 4)
+Resultado: NO
+Tiempo CYK: 10.04 µs
+
+=== w = id+*id ==================================================
+Tokens:    [id, +, *, id]  (n = 4)
+Resultado: NO
+Tiempo CYK: 8.47 µs
+
+=== w = x + id ==================================================
+Tokens:    error: «x» no es un terminal de la gramática
+Resultado: NO  (la palabra no pertenece al alfabeto Σ de la gramática)
+
+=== Resumen =====================================================
+frase               n  resultado  tiempo CYK
+id                  1  SÍ         6.39 µs
+id + id             3  SÍ         19.58 µs
+id * id             3  SÍ         14.93 µs
+(id+id)*id          7  SÍ         33.52 µs
+id+id*id            5  SÍ         26.59 µs
+((id))              5  SÍ         20.42 µs
+id*(id+id*id)+id   11  SÍ         77.24 µs
+(((id)+id)*(id))   13  SÍ         85.36 µs
+ε                   0  NO         2.67 µs
+id +                2  NO         5.85 µs
++ id                2  NO         5.54 µs
+(id                 2  NO         3.94 µs
+id id               2  NO         6.17 µs
+()                  2  NO         3.50 µs
+id**id              4  NO         10.04 µs
+id+*id              4  NO         8.47 µs
+x + id              -  NO         (fuera de Σ)
+8 aceptadas, 9 rechazadas

@@ -1,0 +1,55 @@
+Gramática: grammars/ingles.txt
+  Original: 8 no terminales, 21 terminales, 30 producciones
+  CNF:      8 no terminales, 30 producciones, símbolo inicial S  (conversión en 494.79 µs)
+
+=== w = The cat drinks the beer =================================
+Tokens:    [the, cat, drinks, the, beer]  (n = 5)
+Resultado: SÍ
+Tiempo CYK: 29.07 µs
+
+Tabla CYK  (fila l = longitud de la subcadena, columna = posición inicial)
++-----+-------+-------+----------+-------+--------+
+|     | 0:the | 1:cat | 2:drinks | 3:the | 4:beer |
++-----+-------+-------+----------+-------+--------+
+| l=5 | {S}   |       |          |       |        |
+| l=4 | ∅     | ∅     |          |       |        |
+| l=3 | {S}   | ∅     | {VP}     |       |        |
+| l=2 | {NP}  | ∅     | ∅        | {NP}  |        |
+| l=1 | {Det} | {N}   | {V, VP}  | {Det} | {N}    |
++-----+-------+-------+----------+-------+--------+
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+S
+├── NP
+│   ├── Det
+│   │   └── the
+│   └── N
+│       └── cat
+└── VP
+    ├── V
+    │   └── drinks
+    └── NP
+        ├── Det
+        │   └── the
+        └── N
+            └── beer
+[S [NP [Det the] [N cat]] [VP [V drinks] [NP [Det the] [N beer]]]]
+
+Parse tree (gramática en CNF)
+S
+├── NP
+│   ├── Det
+│   │   └── the
+│   └── N
+│       └── cat
+└── VP
+    ├── V
+    │   └── drinks
+    └── NP
+        ├── Det
+        │   └── the
+        └── N
+            └── beer
+  imagen: ejemplos/arboles/the_cat_drinks_the_beer_original.png
+  imagen: ejemplos/arboles/the_cat_drinks_the_beer_cnf.png

@@ -1,0 +1,2 @@
+# Gramática ambigua de expresiones (para probar el conteo de árboles)
+E -> E + E | E * E | ( E ) | id

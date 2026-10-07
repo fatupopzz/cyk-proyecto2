@@ -1,0 +1,7 @@
+# Expresiones aritméticas (LL(1) clásica, con producciones ε)
+# 'e' representa la cadena vacía
+E -> T X
+X -> + T X | e
+T -> F Y
+Y -> * F Y | e
+F -> ( E ) | id

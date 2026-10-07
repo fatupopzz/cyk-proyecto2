@@ -1,0 +1,314 @@
+Gramática: grammars/ingles.txt
+  Original: 8 no terminales, 21 terminales, 30 producciones
+  CNF:      8 no terminales, 30 producciones, símbolo inicial S  (conversión en 409.00 µs)
+
+=== w = She eats a cake with a fork =============================
+Tokens:    [she, eats, a, cake, with, a, fork]  (n = 7)
+Resultado: SÍ
+Tiempo CYK: 47.58 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+S
+├── NP
+│   └── she
+└── VP
+    ├── VP
+    │   ├── V
+    │   │   └── eats
+    │   └── NP
+    │       ├── Det
+    │       │   └── a
+    │       └── N
+    │           └── cake
+    └── PP
+        ├── P
+        │   └── with
+        └── NP
+            ├── Det
+            │   └── a
+            └── N
+                └── fork
+[S [NP she] [VP [VP [V eats] [NP [Det a] [N cake]]] [PP [P with] [NP [Det a] [N fork]]]]]
+
+=== w = The cat drinks the beer =================================
+Tokens:    [the, cat, drinks, the, beer]  (n = 5)
+Resultado: SÍ
+Tiempo CYK: 17.08 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+S
+├── NP
+│   ├── Det
+│   │   └── the
+│   └── N
+│       └── cat
+└── VP
+    ├── V
+    │   └── drinks
+    └── NP
+        ├── Det
+        │   └── the
+        └── N
+            └── beer
+[S [NP [Det the] [N cat]] [VP [V drinks] [NP [Det the] [N beer]]]]
+
+=== w = he cooks ================================================
+Tokens:    [he, cooks]  (n = 2)
+Resultado: SÍ
+Tiempo CYK: 5.39 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+S
+├── NP
+│   └── he
+└── VP
+    └── cooks
+[S [NP he] [VP cooks]]
+
+=== w = she eats ================================================
+Tokens:    [she, eats]  (n = 2)
+Resultado: SÍ
+Tiempo CYK: 6.06 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+S
+├── NP
+│   └── she
+└── VP
+    └── eats
+[S [NP she] [VP eats]]
+
+=== w = the dog eats the soup with a spoon ======================
+Tokens:    [the, dog, eats, the, soup, with, a, spoon]  (n = 8)
+Resultado: SÍ
+Tiempo CYK: 34.46 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+S
+├── NP
+│   ├── Det
+│   │   └── the
+│   └── N
+│       └── dog
+└── VP
+    ├── VP
+    │   ├── V
+    │   │   └── eats
+    │   └── NP
+    │       ├── Det
+    │       │   └── the
+    │       └── N
+    │           └── soup
+    └── PP
+        ├── P
+        │   └── with
+        └── NP
+            ├── Det
+            │   └── a
+            └── N
+                └── spoon
+[S [NP [Det the] [N dog]] [VP [VP [V eats] [NP [Det the] [N soup]]] [PP [P with] [NP [Det a] [N spoon]]]]]
+
+=== w = she cuts the meat with a knife in the oven ==============
+Tokens:    [she, cuts, the, meat, with, a, knife, in, the, oven]  (n = 10)
+Resultado: SÍ
+Tiempo CYK: 44.51 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+S
+├── NP
+│   └── she
+└── VP
+    ├── VP
+    │   ├── VP
+    │   │   ├── V
+    │   │   │   └── cuts
+    │   │   └── NP
+    │   │       ├── Det
+    │   │       │   └── the
+    │   │       └── N
+    │   │           └── meat
+    │   └── PP
+    │       ├── P
+    │       │   └── with
+    │       └── NP
+    │           ├── Det
+    │           │   └── a
+    │           └── N
+    │               └── knife
+    └── PP
+        ├── P
+        │   └── in
+        └── NP
+            ├── Det
+            │   └── the
+            └── N
+                └── oven
+[S [NP she] [VP [VP [VP [V cuts] [NP [Det the] [N meat]]] [PP [P with] [NP [Det a] [N knife]]]] [PP [P in] [NP [Det the] [N oven]]]]]
+
+=== w = he drinks the juice in the oven with a spoon ============
+Tokens:    [he, drinks, the, juice, in, the, oven, with, a, spoon]  (n = 10)
+Resultado: SÍ
+Tiempo CYK: 47.77 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+S
+├── NP
+│   └── he
+└── VP
+    ├── VP
+    │   ├── VP
+    │   │   ├── V
+    │   │   │   └── drinks
+    │   │   └── NP
+    │   │       ├── Det
+    │   │       │   └── the
+    │   │       └── N
+    │   │           └── juice
+    │   └── PP
+    │       ├── P
+    │       │   └── in
+    │       └── NP
+    │           ├── Det
+    │           │   └── the
+    │           └── N
+    │               └── oven
+    └── PP
+        ├── P
+        │   └── with
+        └── NP
+            ├── Det
+            │   └── a
+            └── N
+                └── spoon
+[S [NP he] [VP [VP [VP [V drinks] [NP [Det the] [N juice]]] [PP [P in] [NP [Det the] [N oven]]]] [PP [P with] [NP [Det a] [N spoon]]]]]
+
+=== w = a fork eats the cat =====================================
+Tokens:    [a, fork, eats, the, cat]  (n = 5)
+Resultado: SÍ
+Tiempo CYK: 17.27 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+S
+├── NP
+│   ├── Det
+│   │   └── a
+│   └── N
+│       └── fork
+└── VP
+    ├── V
+    │   └── eats
+    └── NP
+        ├── Det
+        │   └── the
+        └── N
+            └── cat
+[S [NP [Det a] [N fork]] [VP [V eats] [NP [Det the] [N cat]]]]
+
+=== w = the cat cooks in a cat with the dog =====================
+Tokens:    [the, cat, cooks, in, a, cat, with, the, dog]  (n = 9)
+Resultado: SÍ
+Tiempo CYK: 42.61 µs
+Árboles de derivación: 1
+
+Parse tree (gramática original)
+S
+├── NP
+│   ├── Det
+│   │   └── the
+│   └── N
+│       └── cat
+└── VP
+    ├── VP
+    │   ├── VP
+    │   │   └── cooks
+    │   └── PP
+    │       ├── P
+    │       │   └── in
+    │       └── NP
+    │           ├── Det
+    │           │   └── a
+    │           └── N
+    │               └── cat
+    └── PP
+        ├── P
+        │   └── with
+        └── NP
+            ├── Det
+            │   └── the
+            └── N
+                └── dog
+[S [NP [Det the] [N cat]] [VP [VP [VP cooks] [PP [P in] [NP [Det a] [N cat]]]] [PP [P with] [NP [Det the] [N dog]]]]]
+
+=== w = the cat =================================================
+Tokens:    [the, cat]  (n = 2)
+Resultado: NO
+Tiempo CYK: 7.80 µs
+
+=== w = eats she ================================================
+Tokens:    [eats, she]  (n = 2)
+Resultado: NO
+Tiempo CYK: 5.50 µs
+
+=== w = she a cake ==============================================
+Tokens:    [she, a, cake]  (n = 3)
+Resultado: NO
+Tiempo CYK: 9.41 µs
+
+=== w = cat drinks the beer =====================================
+Tokens:    [cat, drinks, the, beer]  (n = 4)
+Resultado: NO
+Tiempo CYK: 13.78 µs
+
+=== w = the cat drinks beer =====================================
+Tokens:    [the, cat, drinks, beer]  (n = 4)
+Resultado: NO
+Tiempo CYK: 9.19 µs
+
+=== w = she eats a cake with ====================================
+Tokens:    [she, eats, a, cake, with]  (n = 5)
+Resultado: NO
+Tiempo CYK: 12.56 µs
+
+=== w = he he eats ==============================================
+Tokens:    [he, he, eats]  (n = 3)
+Resultado: NO
+Tiempo CYK: 6.10 µs
+
+=== w = she eats the cake with a fork and a knife ===============
+Tokens:    error: «and» no es un terminal de la gramática
+Resultado: NO  (la palabra no pertenece al alfabeto Σ de la gramática)
+
+=== w = the dog barks ===========================================
+Tokens:    error: «barks» no es un terminal de la gramática
+Resultado: NO  (la palabra no pertenece al alfabeto Σ de la gramática)
+
+=== Resumen =====================================================
+frase                                           n  resultado  tiempo CYK
+She eats a cake with a fork                     7  SÍ         47.58 µs
+The cat drinks the beer                         5  SÍ         17.08 µs
+he cooks                                        2  SÍ         5.39 µs
+she eats                                        2  SÍ         6.06 µs
+the dog eats the soup with a spoon              8  SÍ         34.46 µs
+she cuts the meat with a knife in the oven     10  SÍ         44.51 µs
+he drinks the juice in the oven with a spoon   10  SÍ         47.77 µs
+a fork eats the cat                             5  SÍ         17.27 µs
+the cat cooks in a cat with the dog             9  SÍ         42.61 µs
+the cat                                         2  NO         7.80 µs
+eats she                                        2  NO         5.50 µs
+she a cake                                      3  NO         9.41 µs
+cat drinks the beer                             4  NO         13.78 µs
+the cat drinks beer                             4  NO         9.19 µs
+she eats a cake with                            5  NO         12.56 µs
+he he eats                                      3  NO         6.10 µs
+she eats the cake with a fork and a knife       -  NO         (fuera de Σ)
+the dog barks                                   -  NO         (fuera de Σ)
+9 aceptadas, 9 rechazadas

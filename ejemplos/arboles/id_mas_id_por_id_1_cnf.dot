@@ -1,0 +1,33 @@
+digraph ParseTree {
+  graph [ordering=out, nodesep=0.3, ranksep=0.45, fontname="Helvetica", labelloc=t, label="id+id*id  (CNF)"];
+  node [fontname="Helvetica", fontsize=13];
+  edge [arrowhead=none, color="#555555"];
+  n0 [label="E0", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n1 [label="E", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n2 [label="id", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n1 -> n2;
+  n0 -> n1;
+  n3 [label="E0_1", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n4 [label="T_PLUS", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n5 [label="+", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n4 -> n5;
+  n3 -> n4;
+  n6 [label="E", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n7 [label="E", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n8 [label="id", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n7 -> n8;
+  n6 -> n7;
+  n9 [label="E0_2", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n10 [label="T_STAR", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n11 [label="*", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n10 -> n11;
+  n9 -> n10;
+  n12 [label="E", shape=ellipse, style=filled, fillcolor="#DCE8FA", color="#3D6CB3"];
+  n13 [label="id", shape=box, style="rounded,filled", fillcolor="#FDE7C8", color="#C98A2B"];
+  n12 -> n13;
+  n9 -> n12;
+  n6 -> n9;
+  n3 -> n6;
+  n0 -> n3;
+  { rank=same; n2 n5 n8 n11 n13 }
+}

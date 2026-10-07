@@ -1,0 +1,20 @@
+# ---- Frases que SÍ están en el lenguaje ----
+She eats a cake with a fork
+The cat drinks the beer
+he cooks
+she eats
+the dog eats the soup with a spoon
+she cuts the meat with a knife in the oven
+he drinks the juice in the oven with a spoon
+a fork eats the cat
+the cat cooks in a cat with the dog
+# ---- Frases que NO están en el lenguaje ----
+the cat
+eats she
+she a cake
+cat drinks the beer
+the cat drinks beer
+she eats a cake with
+he he eats
+she eats the cake with a fork and a knife
+the dog barks
