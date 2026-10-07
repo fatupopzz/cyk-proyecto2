@@ -1,190 +1,198 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Laboratorio CYK</title>
+<title>Algoritmo CYK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
-/* Layout: cuaderno de laboratorio sobre papel cuadriculado. Gramática y CNF lado a lado;
-   debajo, la frase, la pirámide del CYK, el árbol y el lote de pruebas a todo el ancho. */
+/* Estilo de apunte: papel, títulos con serifa, secciones separadas por una línea. */
 :root {
-  --paper: #f4f6fb;
-  --grid: rgba(51, 70, 211, 0.055);
-  --panel: #ffffff;
-  --ink: #151a2d;
-  --ink-2: #4b5373;
-  --ink-3: #868ca6;
-  --rule: #dde1ec;
-  --accent: #3346d3;
+  --paper: #f6f4ee;
+  --panel: #fffdf8;
+  --ink: #1f1d1a;
+  --ink-2: #514d46;
+  --ink-3: #8b867c;
+  --rule: #dcd6c8;
+  --accent: #2a4a8a;
   --accent-ink: #ffffff;
-  --accent-soft: #e7eafc;
-  --term: #b4531f;
-  --term-soft: #fbeadf;
-  --left: #c27a00;
-  --left-soft: #fdf0d6;
-  --right: #0d8a80;
-  --right-soft: #d8f2ef;
-  --yes: #17834a;
-  --yes-soft: #dcf2e4;
-  --no: #c03535;
-  --no-soft: #fbe2e2;
-  --shadow: 0 1px 2px rgba(21, 26, 45, 0.06), 0 4px 16px rgba(21, 26, 45, 0.05);
+  --accent-soft: #e4e9f3;
+  --term: #a4441c;
+  --term-soft: #f6e6dc;
+  --left: #9c6500;
+  --left-soft: #f6ead0;
+  --right: #1b7468;
+  --right-soft: #dbefeb;
+  --yes: #2e7a33;
+  --yes-soft: #e1efdc;
+  --no: #b0281f;
+  --no-soft: #f6dfdb;
 
-  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
-  --f-body: "IBM Plex Sans", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --f-head: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-body: "Source Sans 3", "Helvetica Neue", Arial, system-ui, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --radius: 10px;
+  --radius: 4px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #0e1120; --grid: rgba(142, 156, 255, 0.05); --panel: #161a2c;
-    --ink: #e9ecf8; --ink-2: #aab1cd; --ink-3: #6f7697; --rule: #2a3050;
-    --accent: #8e9cff; --accent-ink: #0e1120; --accent-soft: #242b55;
-    --term: #ff9d66; --term-soft: #3a2316; --left: #f2b54b; --left-soft: #3a2b10;
-    --right: #45cbbf; --right-soft: #10332f; --yes: #52c985; --yes-soft: #123222;
-    --no: #ff7d7d; --no-soft: #3b1818; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+    --paper: #1a1916; --panel: #22201c; --ink: #ebe7de; --ink-2: #b9b3a6; --ink-3: #807a6e; --rule: #3a362f;
+    --accent: #93acdf; --accent-ink: #1a1916; --accent-soft: #2a3142;
+    --term: #e99a6c; --term-soft: #3a271c; --left: #dcae55; --left-soft: #382c14;
+    --right: #5cc0b2; --right-soft: #17322e; --yes: #79c27c; --yes-soft: #1e3320; --no: #ee8a80; --no-soft: #3d201d;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #0e1120; --grid: rgba(142, 156, 255, 0.05); --panel: #161a2c;
-  --ink: #e9ecf8; --ink-2: #aab1cd; --ink-3: #6f7697; --rule: #2a3050;
-  --accent: #8e9cff; --accent-ink: #0e1120; --accent-soft: #242b55;
-  --term: #ff9d66; --term-soft: #3a2316; --left: #f2b54b; --left-soft: #3a2b10;
-  --right: #45cbbf; --right-soft: #10332f; --yes: #52c985; --yes-soft: #123222;
-  --no: #ff7d7d; --no-soft: #3b1818; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+  --paper: #1a1916; --panel: #22201c; --ink: #ebe7de; --ink-2: #b9b3a6; --ink-3: #807a6e; --rule: #3a362f;
+  --accent: #93acdf; --accent-ink: #1a1916; --accent-soft: #2a3142;
+  --term: #e99a6c; --term-soft: #3a271c; --left: #dcae55; --left-soft: #382c14;
+  --right: #5cc0b2; --right-soft: #17322e; --yes: #79c27c; --yes-soft: #1e3320; --no: #ee8a80; --no-soft: #3d201d;
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; }
-body {
-  background-color: var(--paper);
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 24px 24px;
-  color: var(--ink);
-  font: 15px/1.55 var(--f-body);
-  padding-inline: 16px;
-  padding-block: 0 48px;
-}
-.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 20px; }
+body { background: var(--paper); color: var(--ink); font: 16px/1.55 var(--f-body); padding: 0 16px 56px; }
+.wrap { max-width: 1080px; margin: 0 auto; }
 button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-code, .mono { font-family: var(--f-mono); }
+code, .mono { font-family: var(--f-mono); font-size: .9em; }
+a { color: var(--accent); }
 
 /* ---------- encabezado ---------- */
-.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 28px; }
-.brand h1 { font: 700 clamp(30px, 6vw, 46px)/1 var(--f-display); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
-.brand h1 .sub { color: var(--accent); }
-.brand p { margin: 8px 0 0; color: var(--ink-2); max-width: 62ch; }
-.engine { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
-  background: var(--panel); border: 1px solid var(--rule); font-size: 13px; color: var(--ink-2); white-space: nowrap; }
-.engine .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--right); }
-.engine.py .dot { background: var(--yes); }
+.top { padding: 36px 0 18px; border-bottom: 2px solid var(--ink); display: flex; flex-wrap: wrap; gap: 12px 24px;
+  justify-content: space-between; align-items: flex-end; }
+.kicker { margin: 0 0 4px; font-size: 14px; color: var(--ink-3); }
+.top h1 { margin: 0; font: 600 clamp(32px, 6vw, 44px)/1.05 var(--f-head); letter-spacing: -0.01em; }
+.top .lead { margin: 10px 0 0; max-width: 60ch; color: var(--ink-2); }
+.top-actions { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; font-size: 14px; color: var(--ink-3); }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; font-size: 14px; }
+.toc { display: flex; flex-wrap: wrap; gap: 4px 18px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 14.5px; }
+.toc a { text-decoration: none; color: var(--ink-2); }
+.toc a:hover { color: var(--accent); text-decoration: underline; }
+.toc b { color: var(--ink-3); font-weight: 400; margin-right: 4px; font-family: var(--f-mono); font-size: 13px; }
 
-/* ---------- tarjetas ---------- */
-.row2 { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+/* ---------- secciones ---------- */
+.row2 { display: grid; gap: 0 40px; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 960px) { .row2 { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); } }
-.card { background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius); box-shadow: var(--shadow);
-  padding: 18px; min-width: 0; display: grid; gap: 14px; align-content: start; }
-.card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
-.card h2 { font: 600 20px/1.2 var(--f-display); margin: 0; letter-spacing: -0.01em; }
-.eyebrow { font: 600 11px/1 var(--f-body); letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); }
-.muted { color: var(--ink-3); font-size: 13px; }
-.hint { color: var(--ink-2); font-size: 13.5px; margin: 0; }
+.sec { padding: 28px 0 8px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.sec + .sec, .row2 + .sec { border-top: 1px solid var(--rule); }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+.sec h2 { margin: 0; font: 600 25px/1.2 var(--f-head); }
+.sec h2 .n { color: var(--ink-3); font-weight: 500; margin-right: 6px; }
+.intro { margin: -4px 0 0; color: var(--ink-2); max-width: 75ch; }
+.muted { color: var(--ink-3); font-size: 14px; }
+.hint { color: var(--ink-2); font-size: 14.5px; margin: 0; }
+.eyebrow { font-size: 13px; color: var(--ink-3); font-family: var(--f-mono); }
+
+/* explicación más larga, cerrada por defecto */
+.more summary { cursor: pointer; color: var(--accent); font-size: 14.5px; width: fit-content; }
+.more summary:hover { text-decoration: underline; text-underline-offset: 3px; }
+.more .body { margin-top: 8px; padding-left: 14px; border-left: 2px solid var(--rule); color: var(--ink-2); font-size: 15px;
+  display: grid; gap: 8px; max-width: 78ch; }
+.more p, .more ul, .more ol { margin: 0; }
+.more ul, .more ol { padding-left: 20px; display: grid; gap: 4px; }
+.formula { font-family: var(--f-mono); font-size: 13.5px; color: var(--ink); overflow-x: auto; white-space: nowrap; padding: 4px 0; }
+.formula .L, .cL { color: var(--left); font-weight: 600; }
+.formula .R, .cR { color: var(--right); font-weight: 600; }
 
 /* chips y botones */
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { border: 1px solid var(--rule); background: var(--panel); border-radius: 999px; padding: 5px 11px; font-size: 13px; color: var(--ink-2); }
-.chip:hover { border-color: var(--accent); color: var(--ink); }
-.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.chip.ex { font-family: var(--f-mono); font-size: 12.5px; }
-.chip.ex.y { border-color: color-mix(in srgb, var(--yes) 40%, var(--rule)); }
-.chip.ex.n { border-color: color-mix(in srgb, var(--no) 40%, var(--rule)); }
-.btn { border: 1px solid var(--rule); background: var(--panel); border-radius: 8px; padding: 7px 13px; font-size: 14px; font-weight: 500; }
-.btn:hover { border-color: var(--accent); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chips .lbl { font-size: 13.5px; color: var(--ink-3); margin-right: 2px; min-width: 2.2em; }
+.chip { border: 1px solid var(--rule); background: var(--panel); border-radius: var(--radius); padding: 3px 10px; font-size: 14px; color: var(--ink-2); }
+.chip:hover { border-color: var(--ink-3); color: var(--ink); }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.chip.ex { font-family: var(--f-mono); font-size: 13px; }
+.chip.ex.y { border-left: 3px solid var(--yes); }
+.chip.ex.n { border-left: 3px solid var(--no); }
+.btn { border: 1px solid var(--ink-3); background: var(--panel); border-radius: var(--radius); padding: 6px 14px; font-size: 15px; }
+.btn:hover { border-color: var(--ink); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 .btn:disabled { opacity: .45; cursor: default; }
-.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
-.seg button { border: 0; background: transparent; padding: 6px 12px; font-size: 13.5px; color: var(--ink-2); }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; background: var(--panel); }
+.seg button { border: 0; background: transparent; padding: 5px 11px; font-size: 14px; color: var(--ink-2); }
 .seg button + button { border-left: 1px solid var(--rule); }
 .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 
-textarea, input[type="text"] { width: 100%; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper);
+textarea, input[type="text"] { width: 100%; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--panel);
   padding: 10px 12px; font-family: var(--f-mono); font-size: 13.5px; line-height: 1.6; }
-textarea { resize: vertical; min-height: 220px; tab-size: 4; }
-.err { background: var(--no-soft); color: var(--no); border-radius: 8px; padding: 8px 12px; font-size: 14px; }
-.stats { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+textarea { resize: vertical; min-height: 230px; tab-size: 4; }
+.err { background: var(--no-soft); color: var(--no); border-radius: var(--radius); padding: 8px 12px; font-size: 14.5px; }
+.stats { display: grid; gap: 2px; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .stats b { color: var(--ink); font-weight: 600; }
 
 /* ---------- pasos CNF ---------- */
-.steps { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px; }
-.step { flex: 1 0 auto; border: 1px solid var(--rule); background: var(--panel); border-radius: 8px; padding: 6px 10px;
-  display: grid; gap: 1px; text-align: left; min-width: 64px; }
-.step .num { font: 500 11px var(--f-mono); color: var(--ink-3); }
-.step .k { font: 600 13px var(--f-mono); color: var(--ink-2); }
-.step.changed .k::after { content: " •"; color: var(--right); }
-.step[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
-.step[aria-pressed="true"] .k { color: var(--accent); }
-.steptitle { font: 600 14px/1.3 var(--f-body); color: var(--ink-2); }
-.notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13.5px; color: var(--ink-2); }
-.notes li { padding-left: 14px; position: relative; overflow-wrap: anywhere; }
-.notes li::before { content: ""; position: absolute; left: 2px; top: .65em; width: 5px; height: 5px; border-radius: 50%; background: var(--ink-3); }
-.rules { font-family: var(--f-mono); font-size: 13.5px; line-height: 1.5; display: grid; gap: 3px; overflow-x: auto; }
+.steps { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; width: fit-content; max-width: 100%; background: var(--panel); }
+.step { border: 0; background: transparent; padding: 5px 10px; font: 500 13px var(--f-mono); color: var(--ink-2); }
+.step + .step { border-left: 1px solid var(--rule); }
+.step .num { color: var(--ink-3); margin-right: 4px; }
+.step.changed .k::after { content: "*"; color: var(--right); margin-left: 1px; }
+.step[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.step[aria-pressed="true"] .num { color: inherit; opacity: .6; }
+.step[aria-pressed="true"].changed .k::after { color: inherit; }
+.steptitle { font: 600 17px/1.3 var(--f-head); }
+.stepdesc { margin: 0; font-size: 15px; color: var(--ink-2); max-width: 75ch; }
+.stepdesc .ex { display: block; margin-top: 4px; color: var(--ink-3); font-size: 14px; }
+.notes { margin: 0; padding-left: 18px; display: grid; gap: 2px; font-size: 14.5px; color: var(--ink-2); }
+.notes li { overflow-wrap: anywhere; }
+.rules { font-family: var(--f-mono); font-size: 13.5px; line-height: 1.5; display: grid; gap: 3px; overflow-x: auto;
+  background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius); padding: 10px 12px; }
 .rule { display: grid; grid-template-columns: var(--lw, 6ch) 2ch minmax(0, 1fr); align-items: baseline; }
 .rule .lhs { font-weight: 600; }
 .rule .lhs.new { color: var(--right); }
 .rule .arrow { color: var(--ink-3); }
 .alts { display: flex; flex-wrap: wrap; gap: 2px 0; }
-.alt { padding: 0 3px; border-radius: 4px; white-space: nowrap; }
-.alt.add { background: var(--right-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--right) 35%, transparent); }
+.alt { padding: 0 3px; border-radius: 3px; white-space: nowrap; }
+.alt.add { background: var(--right-soft); }
 .bar { color: var(--ink-3); padding: 0 4px; }
 .tm { color: var(--term); }
 .eps { color: var(--ink-3); font-style: italic; }
 .removed { font-family: var(--f-mono); font-size: 13px; color: var(--no); display: flex; flex-wrap: wrap; gap: 4px 12px; }
-.removed s { text-decoration-thickness: 1.5px; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-3); align-items: center; }
-.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
+.removed .lbl { font-family: var(--f-body); font-size: 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13.5px; color: var(--ink-3); align-items: center; }
+.sw { display: inline-block; width: 11px; height: 11px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
 
-/* ---------- frase y veredicto ---------- */
+/* ---------- frase y resultado ---------- */
 .ask { display: flex; gap: 8px; }
 .ask input { flex: 1; min-width: 0; font-size: 16px; }
-.verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; padding: 14px 16px; border-radius: var(--radius);
-  background: var(--paper); border: 1px solid var(--rule); }
-.pill { font: 700 22px/1 var(--f-display); padding: 8px 16px; border-radius: 999px; letter-spacing: 0.02em; }
-.pill.yes { background: var(--yes-soft); color: var(--yes); }
-.pill.no { background: var(--no-soft); color: var(--no); }
-.metric { display: grid; gap: 2px; min-width: 0; }
-.metric .v { font: 600 17px var(--f-mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.verdict { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 28px; padding: 14px 16px; border-radius: var(--radius);
+  background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--ink-3); }
+.verdict.yes { border-left-color: var(--yes); }
+.verdict.no { border-left-color: var(--no); }
+.pill { font: 600 26px/1 var(--f-head); }
+.pill.yes { color: var(--yes); }
+.pill.no { color: var(--no); }
+.metric { display: grid; gap: 0; min-width: 0; }
+.metric .k { font-size: 13px; color: var(--ink-3); }
+.metric .v { font: 600 16px var(--f-mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .metric .v.amb { color: var(--left); }
 .toks { display: flex; flex-wrap: wrap; gap: 4px; }
-.toks code { background: var(--term-soft); color: var(--term); border-radius: 5px; padding: 1px 7px; font-size: 13px; }
+.toks code { background: var(--term-soft); color: var(--term); border-radius: 3px; padding: 0 6px; font-size: 13px; }
+.verdict-msg { flex: 1 0 100%; margin: 0; color: var(--ink-2); font-size: 15px; }
+.verdict-msg b { color: var(--ink); }
 
 /* ---------- pirámide CYK ---------- */
 .ctrls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .ctrls .grow { flex: 1; }
 .pyr-scroll { overflow-x: auto; padding: 4px 2px 6px; }
-.pyr { display: grid; gap: 5px; min-width: min-content; margin: 0 auto; }
-.cell { border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); min-height: 52px; padding: 16px 4px 5px;
+.pyr { display: grid; gap: 4px; min-width: min-content; margin: 0 auto; }
+.cell { border: 1px solid var(--rule); border-radius: var(--radius); background: var(--panel); min-height: 50px; padding: 15px 4px 5px;
   position: relative; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 3px;
-  transition: background-color .2s, border-color .2s, box-shadow .2s; }
-.cell .ix { position: absolute; top: 3px; left: 6px; font: 500 9.5px var(--f-mono); color: var(--ink-3); }
+  transition: background-color .2s, border-color .2s; }
+.cell .ix { position: absolute; top: 2px; left: 5px; font: 400 9.5px var(--f-mono); color: var(--ink-3); }
 .cell .empty { color: var(--ink-3); font-family: var(--f-mono); font-size: 13px; }
 .cell.pending { background: transparent; border-style: dashed; }
 .cell.pending > :not(.ix) { visibility: hidden; }
-.cell.cur { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.cell.cur { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
 .cell.sel { border-color: var(--accent); background: var(--accent-soft); }
-.cell.srcL { border-color: var(--left); background: var(--left-soft); box-shadow: 0 0 0 1px var(--left); }
-.cell.srcR { border-color: var(--right); background: var(--right-soft); box-shadow: 0 0 0 1px var(--right); }
+.cell.srcL { border-color: var(--left); background: var(--left-soft); }
+.cell.srcR { border-color: var(--right); background: var(--right-soft); }
 .cell.apex.ok { border-color: var(--yes); border-width: 2px; }
 .cell.apex.bad { border-color: var(--no); border-width: 2px; border-style: solid; }
-.nt { border: 0; border-radius: 5px; padding: 1px 6px; font: 500 12.5px var(--f-mono); background: var(--paper); color: var(--ink); }
+.nt { border: 0; border-radius: 3px; padding: 0 5px; font: 500 12.5px var(--f-mono); background: transparent; color: var(--ink); }
 .nt:hover { background: var(--accent-soft); }
-.nt.start { background: var(--yes-soft); color: var(--yes); font-weight: 600; }
+.nt.start { color: var(--yes); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .nt.on { background: var(--accent); color: var(--accent-ink); }
 .tok { text-align: center; padding: 6px 2px 0; display: grid; gap: 1px; border-top: 2px solid transparent; }
 .tok code { font-size: 13.5px; color: var(--term); font-weight: 500; overflow-wrap: anywhere; }
@@ -192,13 +200,13 @@ textarea { resize: vertical; min-height: 220px; tab-size: 4; }
 .tok.hl { border-top-color: var(--accent); }
 .tok.hlL { border-top-color: var(--left); }
 .tok.hlR { border-top-color: var(--right); }
-.info { border-top: 1px solid var(--rule); padding-top: 12px; display: grid; gap: 8px; font-size: 14px; }
-.info h3 { margin: 0; font: 600 15px var(--f-body); }
-.info .words { font-family: var(--f-mono); color: var(--term); }
+.info { border-top: 1px dashed var(--rule); padding-top: 12px; display: grid; gap: 8px; font-size: 15px; }
+.info h3 { margin: 0; font: 600 16px var(--f-head); }
+.info .words { font-family: var(--f-mono); color: var(--term); font-size: 14px; }
 .splits { display: grid; gap: 4px; }
 .split { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; align-items: baseline; text-align: left;
-  border: 1px solid var(--rule); background: var(--panel); border-radius: 8px; padding: 6px 10px; font-size: 13.5px; }
-.split:hover { border-color: var(--accent); }
+  border: 1px solid var(--rule); background: var(--panel); border-radius: var(--radius); padding: 5px 10px; font-size: 14px; }
+.split:hover { border-color: var(--ink-3); }
 .split[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
 .split .k { font: 600 12px var(--f-mono); color: var(--ink-3); }
 .split .body { min-width: 0; overflow-wrap: anywhere; font-family: var(--f-mono); font-size: 13px; }
@@ -208,98 +216,126 @@ textarea { resize: vertical; min-height: 220px; tab-size: 4; }
 .split .none { color: var(--ink-3); }
 
 /* ---------- árbol ---------- */
-.tree-scroll { overflow-x: auto; border-radius: 8px; background: var(--paper); border: 1px solid var(--rule); }
+.tree-scroll { overflow-x: auto; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--rule); }
 .tree-scroll svg { display: block; margin: 0 auto; }
-svg .edge { stroke: var(--ink-3); stroke-width: 1.4; fill: none; }
-svg .n-nt rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.2; }
+svg .edge { stroke: var(--ink-3); stroke-width: 1.2; fill: none; }
+svg .n-nt rect { fill: var(--panel); stroke: var(--ink); stroke-width: 1.2; }
 svg .n-nt text { fill: var(--ink); font: 600 13px var(--f-mono); }
 svg .n-aux rect { fill: var(--panel); stroke: var(--ink-3); stroke-dasharray: 3 2; }
 svg .n-aux text { fill: var(--ink-2); font: 500 12px var(--f-mono); }
-svg .n-t rect { fill: var(--term-soft); stroke: var(--term); stroke-width: 1.2; }
+svg .n-t rect { fill: var(--term-soft); stroke: none; }
 svg .n-t text { fill: var(--term); font: 600 13px var(--f-mono); }
-svg .n-eps text { fill: var(--ink-3); font: italic 14px var(--f-body); }
+svg .n-eps text { fill: var(--ink-3); font: italic 15px var(--f-head); }
 svg .node { cursor: pointer; }
-svg .node.on rect { stroke-width: 2.6; }
-svg .node.on.n-nt rect, svg .node.on.n-aux rect { fill: var(--accent); }
+svg .node.on rect { stroke-width: 2.2; }
+svg .node.on.n-nt rect, svg .node.on.n-aux rect { fill: var(--accent); stroke: var(--accent); }
 svg .node.on.n-nt text, svg .node.on.n-aux text { fill: var(--accent-ink); }
 svg text { text-anchor: middle; dominant-baseline: central; }
 
 /* ---------- lote ---------- */
-.batch-grid { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.batch-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 900px) { .batch-grid { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); } }
 .tbl-scroll { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
-th { text-align: left; font: 600 11px var(--f-body); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3);
-  padding: 6px 8px; border-bottom: 1px solid var(--rule); }
-td { padding: 6px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
-td.f { font-family: var(--f-mono); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-weight: 600; font-size: 13px; color: var(--ink-3); padding: 6px 8px; border-bottom: 1px solid var(--ink-3); }
+td { padding: 5px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+td.f { font-family: var(--f-mono); font-size: 13px; }
 tr.clk { cursor: pointer; }
 tr.clk:hover td { background: var(--accent-soft); }
-.tag { font: 600 12px var(--f-mono); padding: 1px 7px; border-radius: 999px; }
-.tag.yes { background: var(--yes-soft); color: var(--yes); }
-.tag.no { background: var(--no-soft); color: var(--no); }
+.tag { font: 600 13px var(--f-mono); }
+.tag.yes { color: var(--yes); }
+.tag.no { color: var(--no); }
 .ok { color: var(--yes); font-weight: 600; }
 .bad { color: var(--no); font-weight: 600; }
-footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
 
-@media (max-width: 520px) {
-  .card { padding: 14px; }
-  .pill { font-size: 19px; }
-}
+/* ---------- términos ---------- */
+.gloss { margin: 0; display: grid; gap: 6px; max-width: 80ch; font-size: 15px; }
+.gloss div { display: grid; grid-template-columns: 13em minmax(0, 1fr); gap: 12px; }
+.gloss dt { font-weight: 600; }
+.gloss dd { margin: 0; color: var(--ink-2); }
+@media (max-width: 600px) { .gloss div { grid-template-columns: 1fr; gap: 0; } }
+
+footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid var(--rule); color: var(--ink-3); font-size: 13.5px; }
+section[id] { scroll-margin-top: 12px; }
+@media (max-width: 520px) { .pill { font-size: 22px; } .sec h2 { font-size: 22px; } }
 @media (prefers-reduced-motion: reduce) { .cell { transition: none; } }
 </style>
 
 <div class="wrap">
   <header class="top">
-    <div class="brand">
-      <h1>Laboratorio <span class="sub">CYK</span></h1>
-      <p>Convierte una gramática libre de contexto a Forma Normal de Chomsky y decide con programación dinámica si una frase pertenece al lenguaje. Proyecto 2, Teoría de la Computación, UVG.</p>
+    <div>
+      <p class="kicker">Teoría de la Computación · Proyecto 2</p>
+      <h1>Algoritmo CYK</h1>
+      <p class="lead">Pasa una gramática libre de contexto a Forma Normal de Chomsky y usa el algoritmo CYK para saber si una frase pertenece al lenguaje.</p>
     </div>
-    <span class="engine" id="engine"><span class="dot"></span><span id="engineTxt">Motor: JavaScript en el navegador</span></span>
+    <div class="top-actions">
+      <span id="engine"><span id="engineTxt">motor: JavaScript</span></span>
+      <button class="linkbtn" type="button" id="themeToggle">tema oscuro</button>
+    </div>
   </header>
+  <nav class="toc" aria-label="Secciones">
+    <a href="#sec-gram"><b>1</b>Gramática</a>
+    <a href="#sec-cnf"><b>2</b>Forma normal</a>
+    <a href="#sec-frase"><b>3</b>Frase</a>
+    <a href="#tablaCard"><b>4</b>Tabla CYK</a>
+    <a href="#treeCard"><b>5</b>Árbol</a>
+    <a href="#sec-lote"><b>6</b>Lote de pruebas</a>
+  </nav>
 
   <div class="row2">
     <!-- Gramática -->
-    <section class="card" aria-labelledby="h-gram">
-      <div class="card-head">
-        <h2 id="h-gram">Gramática</h2>
+    <section class="sec" aria-labelledby="h-gram" id="sec-gram">
+      <div class="sec-head">
+        <h2 id="h-gram"><span class="n">1</span>Gramática</h2>
         <span class="eyebrow" id="gramFile">grammars/ingles.txt</span>
       </div>
+      <p class="intro">Elija una de ejemplo o escriba la suya. Se vuelve a convertir mientras escribe.</p>
       <div class="chips" id="presets" role="group" aria-label="Gramáticas de ejemplo"></div>
       <textarea id="grammar" spellcheck="false" aria-label="Gramática" autocapitalize="off" autocorrect="off"></textarea>
-      <p class="hint">Una regla por línea, con <code>-&gt;</code> o <code>→</code> y alternativas con <code>|</code>. La cadena vacía se escribe <code>e</code> o <code>ε</code>. El inicial es el lado izquierdo de la primera regla.</p>
+      <details class="more">
+        <summary>Cómo se escribe una gramática</summary>
+        <div class="body">
+          <p>Una regla por línea, con <code>-&gt;</code> o <code>→</code>, y las alternativas separadas con <code>|</code>. Por ejemplo <code>S -&gt; NP VP</code> dice que una oración es un sujeto seguido de un predicado.</p>
+          <p>Lo que aparece a la izquierda de alguna regla es un <i>no terminal</i> (una categoría, como <code>NP</code>). Todo lo demás es <i>terminal</i>: las palabras de la frase, que en la página salen en <span class="tm">naranja</span>.</p>
+          <p>El símbolo inicial es el de la primera regla. La cadena vacía se escribe <code>e</code> o <code>ε</code>.</p>
+        </div>
+      </details>
       <div class="err" id="gramErr" hidden></div>
       <div class="stats" id="gramStats"></div>
     </section>
 
     <!-- CNF -->
-    <section class="card" aria-labelledby="h-cnf">
-      <div class="card-head">
-        <h2 id="h-cnf">Forma Normal de Chomsky</h2>
+    <section class="sec" aria-labelledby="h-cnf" id="sec-cnf">
+      <div class="sec-head">
+        <h2 id="h-cnf"><span class="n">2</span>Forma Normal de Chomsky</h2>
         <span class="muted" id="cnfTime"></span>
       </div>
+      <p class="intro">El CYK solo acepta reglas <code>A → B C</code> o <code>A → a</code>. La conversión se hace en 6 pasos; puede ver la gramática después de cada uno.</p>
       <div class="steps" id="steps" role="tablist" aria-label="Pasos de la conversión"></div>
-      <div class="card-head">
+      <div class="sec-head">
         <div class="steptitle" id="stepTitle"></div>
         <div class="seg">
           <button type="button" id="stepPrev" aria-label="Paso anterior">‹</button>
           <button type="button" id="stepNext" aria-label="Paso siguiente">›</button>
         </div>
       </div>
-      <ul class="notes" id="stepNotes"></ul>
+      <p class="stepdesc" id="stepInfo"></p>
+      <ul class="notes" id="stepNotes" aria-label="Lo que hizo el paso con esta gramática"></ul>
       <div class="rules" id="stepRules"></div>
       <div class="removed" id="stepRemoved" hidden></div>
       <div class="legend">
-        <span><span class="sw" style="background:var(--right-soft);box-shadow:inset 0 0 0 1px var(--right)"></span>regla nueva en este paso</span>
-        <span><span class="sw" style="background:var(--no-soft);box-shadow:inset 0 0 0 1px var(--no)"></span>regla eliminada</span>
-        <span><span class="tm mono">terminal</span></span>
+        <span><span class="sw" style="background:var(--right-soft)"></span>regla nueva en este paso</span>
+        <span><span class="sw" style="background:var(--no-soft)"></span>regla eliminada</span>
+        <span><span class="tm mono">abc</span> terminal</span>
+        <span><span style="color:var(--right)">*</span> el paso cambió algo</span>
       </div>
     </section>
   </div>
 
   <!-- Frase -->
-  <section class="card" aria-labelledby="h-frase">
-    <div class="card-head"><h2 id="h-frase">Frase</h2><span class="muted">w ∈ L(G)?</span></div>
+  <section class="sec" aria-labelledby="h-frase" id="sec-frase">
+    <div class="sec-head"><h2 id="h-frase"><span class="n">3</span>Frase</h2><span class="muted">¿w ∈ L(G)?</span></div>
+    <p class="intro">Escriba una frase o toque un ejemplo. Los de raya verde están en el lenguaje y los de raya roja no.</p>
     <form class="ask" id="askForm">
       <input type="text" id="sentence" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Frase a analizar">
       <button class="btn primary" type="submit">Analizar</button>
@@ -308,18 +344,41 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
     <div class="chips" id="exNo" aria-label="Ejemplos que no están en el lenguaje"></div>
     <div class="verdict" id="verdict" hidden></div>
     <div class="err" id="tokErr" hidden></div>
+    <details class="more">
+      <summary>Qué pasa al analizar</summary>
+      <div class="body">
+        <p>Primero la frase se separa en tokens, que son las palabras o signos del alfabeto de la gramática. <code>(id+id)</code> queda como <code>( id + id )</code> y las mayúsculas no importan.</p>
+        <p>Si alguna palabra no está en el alfabeto, la respuesta es NO sin hacer nada más, porque ninguna regla la puede producir. Si todas están, se llena la tabla de la sección 4.</p>
+        <p>El tiempo que se muestra es solo el llenado de la tabla, promediado en varias corridas porque una sola es demasiado rápida para medirla bien.</p>
+      </div>
+    </details>
   </section>
 
   <!-- Tabla CYK -->
-  <section class="card" aria-labelledby="h-tabla" id="tablaCard">
-    <div class="card-head">
-      <h2 id="h-tabla">Tabla de programación dinámica</h2>
-      <span class="muted">celda [i, l]: subcadena que empieza en i con longitud l</span>
+  <section class="sec" aria-labelledby="h-tabla" id="tablaCard">
+    <div class="sec-head">
+      <h2 id="h-tabla"><span class="n">4</span>Tabla del CYK</h2>
+      <span class="muted">celda [i, l] = las l palabras que empiezan en la posición i</span>
     </div>
+    <p class="intro">Cada celda guarda qué símbolos pueden generar ese pedazo de la frase. La de arriba cubre la frase entera: si ahí está el símbolo inicial, la respuesta es SÍ.</p>
+    <details class="more">
+      <summary>Cómo se llena la tabla</summary>
+      <div class="body">
+        <p>Se empieza por abajo. En la primera fila cada celda tiene una sola palabra, y se anotan los <code>A</code> que tienen una regla <code>A → palabra</code>.</p>
+        <p>Para las filas de arriba, el pedazo se corta en dos de todas las formas posibles: una parte izquierda de largo k y una derecha de largo l − k. Si <span class="cL">B</span> está en la celda de la izquierda, <span class="cR">C</span> en la de la derecha y existe la regla <code>A → B C</code>, entonces <code>A</code> entra a la celda.</p>
+        <div class="formula">T[i, l] = { A | A → <span class="L">B</span> <span class="R">C</span>,  <span class="L">B</span> ∈ T[i, k],  <span class="R">C</span> ∈ T[i+k, l−k],  1 ≤ k &lt; l }</div>
+        <p>Como cada celda solo usa celdas más bajas, que ya están calculadas, nada se calcula dos veces. Eso es la programación dinámica, y por eso el algoritmo es O(n³).</p>
+      </div>
+    </details>
     <div class="ctrls">
-      <button class="btn" type="button" id="play">▶ Animar llenado</button>
-      <button class="btn" type="button" id="stepBtn">Paso</button>
-      <button class="btn" type="button" id="fillAll">Mostrar todo</button>
+      <button class="btn primary" type="button" id="play">▶ Animar llenado</button>
+      <button class="btn" type="button" id="stepBtn" title="Calcular la siguiente celda">Paso</button>
+      <button class="btn" type="button" id="fillAll" title="Mostrar la tabla completa">Llenar todo</button>
+      <div class="seg" id="speed" role="group" aria-label="Velocidad de la animación">
+        <button type="button" data-v="2" aria-pressed="false">lenta</button>
+        <button type="button" data-v="1" aria-pressed="true">normal</button>
+        <button type="button" data-v="0.4" aria-pressed="false">rápida</button>
+      </div>
       <span class="grow"></span>
       <span class="muted mono" id="progress"></span>
     </div>
@@ -328,18 +387,18 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
       <span><span class="sw" style="background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)"></span>celda seleccionada</span>
       <span><span class="sw" style="background:var(--left-soft);box-shadow:inset 0 0 0 1px var(--left)"></span>parte izquierda (B)</span>
       <span><span class="sw" style="background:var(--right-soft);box-shadow:inset 0 0 0 1px var(--right)"></span>parte derecha (C)</span>
-      <span>Toque un símbolo para ver de dónde salió.</span>
+      <span>Toque una celda para ver los cortes, o un símbolo para ver de dónde salió.</span>
     </div>
     <div class="info" id="info"></div>
   </section>
 
   <!-- Árbol -->
-  <section class="card" aria-labelledby="h-tree" id="treeCard">
-    <div class="card-head">
-      <h2 id="h-tree">Parse tree</h2>
+  <section class="sec" aria-labelledby="h-tree" id="treeCard">
+    <div class="sec-head">
+      <h2 id="h-tree"><span class="n">5</span>Árbol de derivación</h2>
       <div class="ctrls">
         <div class="seg" role="group" aria-label="Tipo de árbol">
-          <button type="button" id="kOrig" aria-pressed="true">Gramática original</button>
+          <button type="button" id="kOrig" aria-pressed="true">gramática original</button>
           <button type="button" id="kCnf" aria-pressed="false">CNF</button>
         </div>
         <div class="seg" id="treeNav" hidden>
@@ -349,24 +408,56 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
         </div>
       </div>
     </div>
-    <p class="hint" id="treeHint"></p>
+    <p class="intro" id="treeHint"></p>
     <div class="tree-scroll" id="treeBox"></div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--panel);box-shadow:inset 0 0 0 1px var(--ink)"></span>no terminal</span>
+      <span><span class="sw" style="background:var(--term-soft)"></span>terminal</span>
+      <span><span class="sw" style="background:var(--panel);outline:1px dashed var(--ink-3);outline-offset:-1px"></span>símbolo que agregó la CNF</span>
+      <span><span class="eps" style="margin-right:4px">ε</span>cadena vacía</span>
+    </div>
+    <details class="more">
+      <summary>Cómo se lee el árbol</summary>
+      <div class="body">
+        <p>Arriba está el símbolo inicial y abajo las palabras. Cada nodo con sus hijos es una regla que se aplicó, y las hojas leídas de izquierda a derecha dan la frase.</p>
+        <p>El árbol que sale de la tabla está en la gramática CNF, con símbolos como <code>T_PLUS</code> o <code>X_1</code> que nadie escribió. Por eso también se muestra traducido a la gramática original, incluyendo las ε que la conversión había quitado.</p>
+        <p>Si la frase tiene más de un árbol, es ambigua, y se pueden recorrer con ‹ ›.</p>
+      </div>
+    </details>
   </section>
 
   <!-- Lote -->
-  <section class="card" aria-labelledby="h-lote">
-    <div class="card-head"><h2 id="h-lote">Lote de pruebas</h2><span class="muted">las mismas frases de pruebas/*.txt</span></div>
+  <section class="sec" aria-labelledby="h-lote" id="sec-lote">
+    <div class="sec-head"><h2 id="h-lote"><span class="n">6</span>Lote de pruebas</h2><span class="muted">las frases de pruebas/*.txt</span></div>
     <div class="batch-grid">
       <div style="display:grid;gap:8px;align-content:start;min-width:0">
         <textarea id="batchTxt" spellcheck="false" aria-label="Frases del lote" style="min-height:260px"></textarea>
-        <p class="hint">Una frase por línea. Las líneas <code># SÍ</code> y <code># NO</code> marcan el resultado esperado.</p>
+        <p class="hint">Una frase por línea. Las líneas <code># SÍ</code> y <code># NO</code> indican qué resultado se espera.</p>
         <div><button class="btn primary" type="button" id="runBatch">Correr lote</button></div>
       </div>
-      <div class="tbl-scroll" id="batchOut"><p class="muted">Corra el lote para ver la tabla de resultados.</p></div>
+      <div class="tbl-scroll" id="batchOut"><p class="muted">Aquí aparece la tabla de resultados.</p></div>
     </div>
   </section>
 
-  <footer>Proyecto 2 · Teoría de la Computación, UVG · CYK O(n³·|G|) · Los tiempos son el promedio de varias corridas del llenado de la tabla</footer>
+  <!-- Términos -->
+  <section class="sec" aria-labelledby="h-gloss">
+    <details class="more">
+      <summary id="h-gloss">Términos usados en la página</summary>
+      <div class="body" style="border:0;padding:0;max-width:none">
+        <dl class="gloss">
+          <div><dt>L(G)</dt><dd>Todas las frases que se pueden derivar desde el símbolo inicial de la gramática G.</dd></div>
+          <div><dt>Alfabeto Σ</dt><dd>Los terminales, o sea, las palabras y signos que pueden aparecer en una frase.</dd></div>
+          <div><dt>ε</dt><dd>La cadena vacía. <code>A → ε</code> quiere decir que <code>A</code> puede desaparecer.</dd></div>
+          <div><dt>Anulable</dt><dd>Un no terminal que puede llegar a ε.</dd></div>
+          <div><dt>Regla unitaria</dt><dd><code>A → B</code>, con un solo no terminal a la derecha.</dd></div>
+          <div><dt>Símbolo inútil</dt><dd>Uno que nunca llega a solo terminales, o al que no se llega desde el inicial.</dd></div>
+          <div><dt>Ambigua</dt><dd>Una frase con más de un árbol de derivación.</dd></div>
+        </dl>
+      </div>
+    </details>
+  </section>
+
+  <footer>Proyecto 2 · Teoría de la Computación · UVG</footer>
 </div>
 
 <script src="cyk-engine.js"></script>
@@ -384,6 +475,13 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
     order: [], reveal: 0, timer: null,
     sel: null,            // {i, l, a, bp, k}
     treeIdx: 0, treeKind: "orig", nodeOn: null,
+    speed: 1,             // multiplicador del tiempo entre celdas al animar
+  };
+
+  // Preferencias del visitante (tema y explicaciones); si el navegador no deja guardar, se usan los valores por defecto.
+  const pref = {
+    get(k) { try { return localStorage.getItem("cyk." + k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem("cyk." + k, v); } catch (e) { /* sin almacenamiento */ } },
   };
 
   // ------------------------------------------------------------ motor
@@ -409,9 +507,7 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
     renderEngine();
   }
   function renderEngine() {
-    $("#engine").classList.toggle("py", S.engine === "python");
-    $("#engineTxt").textContent = S.engine === "python"
-      ? "Motor: Python (app.py)" : "Motor: JavaScript en el navegador";
+    $("#engineTxt").textContent = S.engine === "python" ? "motor: Python (app.py)" : "motor: JavaScript";
     $("#engine").title = S.engine === "python"
       ? "El análisis lo hace el mismo código Python de main.py"
       : "Traducción del motor Python, verificada salida por salida contra él";
@@ -441,14 +537,14 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
     $("#gramFile").textContent = p.file;
     renderExamples(p);
     $("#batchTxt").value = "# SÍ\n" + p.yes.join("\n") + "\n# NO\n" + p.no.join("\n");
-    $("#batchOut").innerHTML = '<p class="muted">Corra el lote para ver la tabla de resultados.</p>';
+    $("#batchOut").innerHTML = '<p class="muted">Aquí aparece la tabla de resultados.</p>';
     if (!keepSentence) $("#sentence").value = p.yes[0] || "";
     convert(true);
   }
   function renderExamples(p) {
     const chip = (s, cls) => `<button type="button" class="chip ex ${cls}" data-s="${esc(s)}">${esc(s)}</button>`;
-    $("#exYes").innerHTML = p ? `<span class="eyebrow" style="align-self:center;margin-right:4px">Sí</span>` + p.yes.map((s) => chip(s, "y")).join("") : "";
-    $("#exNo").innerHTML = p ? `<span class="eyebrow" style="align-self:center;margin-right:4px">No</span>` + p.no.map((s) => chip(s, "n")).join("") : "";
+    $("#exYes").innerHTML = p ? `<span class="lbl">Sí:</span>` + p.yes.map((s) => chip(s, "y")).join("") : "";
+    $("#exNo").innerHTML = p ? `<span class="lbl">No:</span>` + p.no.map((s) => chip(s, "n")).join("") : "";
   }
 
   let convTimer = null;
@@ -470,7 +566,36 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
     if (runSentence) run();
   }
 
+
   // ------------------------------------------------------------ pasos CNF
+  // Qué hace cada paso, por qué hace falta y un ejemplo (con la gramática de expresiones).
+  const STEP_INFO = {
+    ORIG: { what: "La gramática tal como se escribió, sin cambios.",
+      why: "Es el punto de partida. Los 6 pasos siguientes la transforman sin cambiar las frases que acepta." },
+    START: { what: "Si el símbolo inicial aparece a la derecha de alguna regla, se crea un inicial nuevo <code>S0 → S</code>.",
+      why: "En CNF el inicial no puede aparecer a la derecha. Así, si más adelante hace falta <code>S0 → ε</code>, la cadena vacía no se cuela dentro de otras reglas.",
+      ex: "<code>F → ( E )</code> usa <code>E</code> a la derecha, así que se agrega <code>E0 → E</code>." },
+    DEL: { what: "Busca los <b>anulables</b> (no terminales que pueden desaparecer) y, en cada regla que los usa, agrega una versión con y otra sin ellos. Después borra las reglas <code>A → ε</code>.",
+      why: "La CNF no permite reglas vacías, salvo <code>S0 → ε</code> cuando la cadena vacía está en el lenguaje.",
+      ex: "Con <code>X</code> anulable, <code>X → + T X</code> da también <code>X → + T</code>." },
+    UNIT: { what: "Quita las reglas <code>A → B</code> (un solo no terminal) copiando a <code>A</code> las reglas de <code>B</code>, siguiendo cadenas <code>A ⇒ B ⇒ C …</code>.",
+      why: "<code>A → B</code> no tiene la forma <code>A → B C</code> ni <code>A → a</code>, y solo renombra: no aporta palabras.",
+      ex: "<code>E → T</code> y <code>T → F Y</code> se convierten en <code>E → F Y</code>." },
+    USELESS: { what: "Quita los no terminales que nunca llegan a solo terminales (<b>no generadores</b>) y los que no se alcanzan desde el inicial (<b>no alcanzables</b>).",
+      why: "No pueden aparecer en ninguna derivación válida; quitarlos deja la gramática y la tabla más pequeñas." },
+    TERM: { what: "En las reglas de 2 o más símbolos, cambia cada terminal <code>a</code> por un no terminal nuevo <code>T_a</code>, con <code>T_a → a</code>.",
+      why: "En <code>A → B C</code> los dos hijos deben ser no terminales.",
+      ex: "<code>X → + T</code> pasa a <code>X → T_PLUS T</code> con <code>T_PLUS → +</code>." },
+    BIN: { what: "Parte las reglas de 3 o más símbolos en una cadena de reglas de 2, con auxiliares <code>A_1</code>, <code>A_2</code>…",
+      why: "El CYK divide cada pedazo de la frase en exactamente dos partes, así que cada regla debe tener exactamente dos hijos.",
+      ex: "<code>F → T_LPAR E T_RPAR</code> pasa a <code>F → T_LPAR F_1</code> y <code>F_1 → E T_RPAR</code>." },
+  };
+  function renderStepInfo(key) {
+    const info = STEP_INFO[key];
+    if (!info) { $("#stepInfo").hidden = true; return; }
+    $("#stepInfo").hidden = false;
+    $("#stepInfo").innerHTML = `${info.what} ${info.why}` + (info.ex ? `<span class="ex">Ej.: ${info.ex}</span>` : "");
+  }
   const ruleKeys = (st) => { const s = new Set(); for (const r of st.rules) for (const a of r.alts) s.add(r.lhs + "\u0000" + a.join(" ")); return s; };
   function changed(i) {
     if (i === 0) return false;
@@ -485,7 +610,9 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
       `<button type="button" role="tab" class="step${changed(i) ? " changed" : ""}" data-i="${i}" aria-pressed="${i === S.step}" aria-selected="${i === S.step}">` +
       `<span class="num">${i}</span><span class="k">${st.key}</span></button>`).join("");
     const st = steps[S.step], prev = S.step > 0 ? steps[S.step - 1] : null;
-    $("#stepTitle").textContent = S.step === steps.length - 1 ? `${st.title} · resultado final en CNF` : st.title;
+    const label = S.step === 0 ? st.title : `Paso ${S.step} de ${steps.length - 1}: ${st.title}`;
+    $("#stepTitle").textContent = S.step === steps.length - 1 ? `${label} · resultado final en CNF` : label;
+    renderStepInfo(st.key);
     $("#stepNotes").innerHTML = (st.notes.length ? st.notes : ["La gramática tal como está en el archivo."]).map((n) => `<li>${esc(n)}</li>`).join("");
     const nts = new Set(st.rules.map((r) => r.lhs));
     const prevKeys = prev ? ruleKeys(prev) : null;
@@ -507,7 +634,7 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
       const gone = [];
       for (const r of prev.rules) for (const a of r.alts) if (!cur.has(r.lhs + "\u0000" + a.join(" "))) gone.push(`${r.lhs} → ${a.length ? a.join(" ") : "ε"}`);
       $("#stepRemoved").hidden = !gone.length;
-      $("#stepRemoved").innerHTML = gone.length ? `<span class="eyebrow" style="color:inherit">Se quitaron</span>` + gone.map((g) => `<s>${esc(g)}</s>`).join("") : "";
+      $("#stepRemoved").innerHTML = gone.length ? `<span class="lbl">Se quitaron:</span>` + gone.map((g) => `<s>${esc(g)}</s>`).join("") : "";
     } else $("#stepRemoved").hidden = true;
     $("#stepPrev").disabled = S.step === 0;
     $("#stepNext").disabled = S.step === steps.length - 1;
@@ -532,21 +659,42 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
     renderVerdict(); renderPyr(); renderInfo(); renderTree();
   }
 
+  // Explicación en una oración de por qué la respuesta es SÍ o NO.
+  function verdictMessage(r) {
+    const st = `<b class="mono">${esc(S.out.cnf.start)}</b>`;
+    if (!r.tokens) return "Hay una palabra que no está en el alfabeto Σ de la gramática, así que ninguna regla la puede producir.";
+    const n = r.tokens.length;
+    if (!n) return r.accepted
+      ? `La cadena vacía pertenece al lenguaje porque existe la regla ${st} → ε.`
+      : `La cadena vacía no pertenece al lenguaje: no existe la regla ${st} → ε.`;
+    if (r.accepted) {
+      const total = BigInt(r.treeCount);
+      return `La frase <b>sí</b> pertenece a L(G): el símbolo inicial ${st} aparece en la celda de arriba [0, ${n}], la que cubre las ${n} palabras.` +
+        (total > 1n ? ` Además es <b>ambigua</b>: hay ${group(r.treeCount)} formas distintas de derivarla.` : " Hay una sola forma de derivarla.");
+    }
+    const top = cellOf(0, n).map((x) => esc(x[0]));
+    return `La frase <b>no</b> pertenece a L(G): la celda de arriba [0, ${n}] ` +
+      (top.length ? `contiene {${top.join(", ")}} pero no a ${st}.` : "quedó vacía: ningún no terminal genera la frase completa.") +
+      " Revise en la tabla dónde se corta la construcción.";
+  }
+
   function renderVerdict() {
     const r = S.out.result, v = $("#verdict");
     $("#tokErr").hidden = !r.tokenError;
     if (r.tokenError) $("#tokErr").textContent = r.tokenError + ". Como no pertenece al alfabeto Σ, la respuesta es NO sin llenar la tabla.";
     v.hidden = false;
+    v.className = "verdict " + (r.accepted ? "yes" : "no");
     const amb = BigInt(r.treeCount) > 1n;
     const toks = r.tokens ? (r.tokens.length ? r.tokens.map((t) => `<code>${esc(t)}</code>`).join("") : '<span class="eps">ε (cadena vacía)</span>') : "n/d";
     v.innerHTML =
       `<span class="pill ${r.accepted ? "yes" : "no"}">${r.accepted ? "SÍ" : "NO"}</span>` +
-      `<div class="metric"><span class="eyebrow">Tiempo CYK</span><span class="v">${r.tokens ? fmtNs(r.ns) : "n/d"}</span>` +
+      `<div class="metric"><span class="k">Tiempo CYK</span><span class="v">${r.tokens ? fmtNs(r.ns) : "n/d"}</span>` +
       `<span class="muted">${r.tokens ? `promedio de ${r.reps} corrida${r.reps === 1 ? "" : "s"} · primera: ${fmtNs(r.firstNs)}` : "fuera del alfabeto"}</span></div>` +
-      `<div class="metric"><span class="eyebrow">n</span><span class="v">${r.tokens ? r.tokens.length : "n/d"}</span><span class="muted">tokens</span></div>` +
-      `<div class="metric"><span class="eyebrow">Árboles</span><span class="v${amb ? " amb" : ""}">${group(r.treeCount)}</span>` +
+      `<div class="metric"><span class="k">n</span><span class="v">${r.tokens ? r.tokens.length : "n/d"}</span><span class="muted">tokens</span></div>` +
+      `<div class="metric"><span class="k">Árboles</span><span class="v${amb ? " amb" : ""}">${group(r.treeCount)}</span>` +
       `<span class="muted">${amb ? "frase ambigua" : r.accepted ? "derivación única" : "no hay derivación"}</span></div>` +
-      `<div class="metric" style="flex:1 1 220px"><span class="eyebrow">Tokens</span><div class="toks">${toks}</div></div>`;
+      `<div class="metric" style="flex:1 1 220px"><span class="k">Tokens</span><div class="toks">${toks}</div></div>` +
+      `<p class="verdict-msg">${verdictMessage(r)}</p>`;
   }
 
   // ------------------------------------------------------------ pirámide
@@ -599,7 +747,7 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
       html += `<div class="${c}" style="grid-column:${2 * i + 1} / span 2;grid-row:${n + 1}"><code>${esc(t)}</code><span class="ix">${i}</span></div>`;
     });
     box.innerHTML = html;
-    $("#progress").textContent = S.reveal < S.order.length ? `celda ${S.reveal} de ${S.order.length}` : `${S.order.length} celdas · n = ${n}`;
+    $("#progress").textContent = S.reveal < S.order.length ? `celda ${S.reveal} de ${S.order.length}` : `${S.order.length} celda${S.order.length === 1 ? "" : "s"} · n = ${n}`;
   }
 
   // ------------------------------------------------------------ explicación
@@ -751,7 +899,7 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
       let cls = nd.kind === "t" ? "n-t" : nd.kind === "eps" ? "n-eps" : (S.treeKind === "cnf" && isAux(nd.label) ? "n-aux" : "n-nt");
       const on = S.nodeOn === idx;
       svg += `<g class="node ${cls}${on ? " on" : ""}" data-n="${idx}" tabindex="0" aria-label="${esc(nd.label)}">`;
-      if (nd.kind !== "eps") svg += `<rect x="${nd.x - nd.w / 2}" y="${y(nd.d) - 13}" width="${nd.w}" height="26" rx="${nd.kind === "t" ? 6 : 13}"/>`;
+      if (nd.kind !== "eps") svg += `<rect x="${nd.x - nd.w / 2}" y="${y(nd.d) - 13}" width="${nd.w}" height="26" rx="3"/>`;
       svg += `<text x="${nd.x}" y="${y(nd.d) + 0.5}">${esc(nd.label)}</text></g>`;
     });
     svg += "</svg>";
@@ -823,14 +971,21 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
     if (b.dataset.k !== undefined) S.sel.k = +b.dataset.k;
     setSplitFromSel(); renderPyr(); renderInfo();
   });
+  const animDelay = () => Math.max(140, Math.min(650, 5200 / S.order.length)) * S.speed;
   $("#play").addEventListener("click", () => {
     if (S.timer) { stopAnim(); return; }
     if (S.reveal >= S.order.length) S.reveal = 0;
     $("#play").textContent = "❚❚ Pausa";
-    const speed = Math.max(140, Math.min(650, 5200 / S.order.length));
     stepOnce();
-    S.timer = setInterval(stepOnce, speed);
+    S.timer = setInterval(stepOnce, animDelay());
     $("#tablaCard").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  });
+  $("#speed").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-v]");
+    if (!b) return;
+    S.speed = +b.dataset.v;
+    for (const x of $("#speed").children) x.setAttribute("aria-pressed", x === b);
+    if (S.timer) { clearInterval(S.timer); S.timer = setInterval(stepOnce, animDelay()); }
   });
   $("#stepBtn").addEventListener("click", () => { stopAnim(); if (S.reveal >= S.order.length) S.reveal = 0; stepOnce(); });
   $("#fillAll").addEventListener("click", () => {
@@ -850,7 +1005,30 @@ footer { color: var(--ink-3); font-size: 12.5px; text-align: center; }
     if (tr) { $("#sentence").value = tr.dataset.s; run(); $("#tablaCard").scrollIntoView({ block: "start" }); }
   });
 
+  $("#steps").addEventListener("keydown", (e) => {
+    const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (!d || !S.base) return;
+    e.preventDefault();
+    S.step = Math.max(0, Math.min(S.base.steps.length - 1, S.step + d));
+    renderSteps();
+    $(`#steps [data-i="${S.step}"]`).focus();
+  });
+
+  // ------------------------------------------------------------ tema y explicaciones
+  const curTheme = () => document.documentElement.dataset.theme
+    || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  function applyTheme(t) {
+    if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    $("#themeToggle").textContent = curTheme() === "dark" ? "tema claro" : "tema oscuro";
+  }
+  $("#themeToggle").addEventListener("click", () => {
+    const next = curTheme() === "dark" ? "light" : "dark";
+    applyTheme(next); pref.set("theme", next);
+  });
+
   // ------------------------------------------------------------ inicio
+  applyTheme(pref.get("theme"));
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme(null));
   renderEngine();
   if (PRESETS.length) loadPreset(PRESETS[0].id);
   detectEngine().then(() => { if (S.engine === "python") convert(true); });

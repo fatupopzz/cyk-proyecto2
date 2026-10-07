@@ -241,22 +241,31 @@ python3 app.py              # abre http://localhost:8000
 
 `app.py` es un servidor local (solo biblioteca estándar) que sirve `web/` y
 responde `POST /api/analyze` con el **mismo motor Python** de `cfg/`. La
-insignia de la esquina dice qué motor está en uso.
+texto de la esquina dice qué motor está en uso.
 
 ![interfaz](ejemplos/interfaz_completa.png)
+
+Cada sección tiene una explicación corta arriba y un enlace para abrir una más
+larga (cómo se escribe la gramática, cómo se llena la tabla, cómo se lee el
+árbol). Cada paso de la CNF dice qué hace y por qué, y el resultado viene con
+una frase que explica por qué es SÍ o NO. Tiene tema claro y oscuro.
 
 Qué se puede hacer:
 
 * **Gramática:** elegir una de ejemplo o escribir cualquier otra; se vuelve a convertir mientras se escribe.
 * **Forma Normal de Chomsky:** recorrer los 7 estados (original y los 6 pasos). En cada uno se resaltan las reglas **nuevas** y se listan las **eliminadas**, con las notas del paso (anulables, pares unitarios, auxiliares).
 * **Frase:** SÍ/NO, tiempo del CYK, número de tokens y número de árboles. Hay ejemplos que sí y que no están en el lenguaje para probar con un toque.
-* **Tabla de programación dinámica** dibujada como pirámide: cada celda `[i, l]` está justo encima de las palabras que cubre. Se puede **animar el llenado** celda por celda o avanzar con **Paso**; para cada celda se muestran los cortes `k` probados y qué reglas `A → B C` aplicaron. Al tocar un símbolo se iluminan las dos celdas de donde salió (B en ámbar, C en verde azulado).
+* **Tabla de programación dinámica** dibujada como pirámide: cada celda `[i, l]` está justo encima de las palabras que cubre. Se puede **animar el llenado** celda por celda (a tres velocidades) o avanzar con **Paso**; para cada celda se muestran los cortes `k` probados y qué reglas `A → B C` aplicaron. Al tocar un símbolo se iluminan las dos celdas de donde salió (B en ámbar, C en verde azulado).
 * **Parse tree** en la gramática original o en CNF. Al tocar un nodo se ilumina en la tabla la subcadena que cubre. Si la frase es ambigua se puede navegar entre los árboles.
 * **Lote de pruebas:** corre todas las frases de `pruebas/*.txt` y compara con el resultado esperado.
 
 | Pasos de la CNF (DEL en expresiones) | Tabla CYK con un símbolo seleccionado |
 |---|---|
 | ![pasos](ejemplos/interfaz_pasos_cnf.png) | ![tabla](ejemplos/interfaz_tabla_cyk.png) |
+
+Árboles de una frase ambigua (`id+id*id`, 2 árboles), en tema oscuro:
+
+![árbol](ejemplos/interfaz_arbol.png)
 
 **Uso sin Python.** La página también funciona abierta sola (por ejemplo,
 publicada en la web), porque trae `web/cyk-engine.js`, una traducción directa
