@@ -14,7 +14,8 @@ pertenece al lenguaje. Para cada frase reporta:
   **gramática original** (con sus ε incluidas), en texto y en imagen (Graphviz)
 * el **número de árboles** distintos (detecta frases ambiguas)
 
-Además tiene una **interfaz visual** (`python3 app.py`) con la conversión a CNF
+Además tiene una **interfaz visual** (`python3 app.py`, o en línea en
+https://fatupopzz.github.io/cyk-proyecto2/) con la conversión a CNF
 paso a paso, la pirámide del CYK animada y el árbol interactivo (sección 4).
 
 No usa librerías externas para el algoritmo: solo Python 3.10+ estándar.
