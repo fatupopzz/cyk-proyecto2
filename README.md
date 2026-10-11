@@ -254,10 +254,10 @@ una frase que explica por qué es SÍ o NO. Tiene tema claro y oscuro.
 Qué se puede hacer:
 
 * **Gramática:** elegir una de ejemplo o escribir cualquier otra; se vuelve a convertir mientras se escribe.
-* **Forma Normal de Chomsky:** recorrer los 7 estados (original y los 6 pasos). En cada uno se resaltan las reglas **nuevas** y se listan las **eliminadas**, con las notas del paso (anulables, pares unitarios, auxiliares).
-* **Frase:** SÍ/NO, tiempo del CYK, número de tokens y número de árboles. Hay ejemplos que sí y que no están en el lenguaje para probar con un toque.
-* **Tabla de programación dinámica** dibujada como pirámide: cada celda `[i, l]` está justo encima de las palabras que cubre. Se puede **animar el llenado** celda por celda (a tres velocidades) o avanzar con **Paso**; para cada celda se muestran los cortes `k` probados y qué reglas `A → B C` aplicaron. Al tocar un símbolo se iluminan las dos celdas de donde salió (B en ámbar, C en verde azulado).
-* **Parse tree** en la gramática original o en CNF. Al tocar un nodo se ilumina en la tabla la subcadena que cubre. Si la frase es ambigua se puede navegar entre los árboles.
+* **Forma Normal de Chomsky:** recorrer los 7 estados (original y los 6 pasos). En cada uno se resaltan las reglas **nuevas** y se listan las **eliminadas**, con las notas del paso (anulables, pares unitarios, auxiliares). Con **▶ Reproducir** los pasos se recorren solos: las reglas nuevas entran una por una y las eliminadas se tachan.
+* **Frase:** los tokens aparecen uno por uno; luego SÍ/NO, tiempo del CYK, número de tokens y número de árboles. Hay ejemplos que sí y que no están en el lenguaje para probar con un toque.
+* **Tabla de programación dinámica** dibujada como pirámide: cada celda `[i, l]` está justo encima de las palabras que cubre. Se puede **animar el llenado** (a tres velocidades) o avanzar con **Paso**: la animación prueba cada corte `k` de cada celda, ilumina las dos celdas que combina y los símbolos aparecen en el momento en que se encuentran; para cada celda se muestran los cortes `k` probados y qué reglas `A → B C` aplicaron. Al tocar un símbolo se iluminan las dos celdas de donde salió (B en ámbar, C en verde azulado).
+* **Parse tree** en la gramática original o en CNF. Con **▶ Construir el árbol** crece desde la raíz aplicando una regla a la vez, y al lado se va escribiendo la **derivación por la izquierda** (`S ⇒ NP VP ⇒ she VP ⇒ …`). Al tocar un nodo se ilumina en la tabla la subcadena que cubre. Si la frase es ambigua se puede navegar entre los árboles.
 * **Lote de pruebas:** corre todas las frases de `pruebas/*.txt` y compara con el resultado esperado.
 
 | Pasos de la CNF (DEL en expresiones) | Tabla CYK con un símbolo seleccionado |

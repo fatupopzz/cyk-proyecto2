@@ -255,10 +255,44 @@ tr.clk:hover td { background: var(--accent-soft); }
 .gloss dd { margin: 0; color: var(--ink-2); }
 @media (max-width: 600px) { .gloss div { grid-template-columns: 1fr; gap: 0; } }
 
+/* ---------- animaciones ---------- */
+@keyframes pop { 0% { transform: scale(.3); opacity: 0; } 70% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes glow { from { background: var(--yes-soft); box-shadow: 0 0 0 2px var(--yes); } to { background: transparent; box-shadow: none; } }
+@keyframes rise { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes addin { from { background: var(--right); color: var(--panel); transform: translateX(-6px); opacity: 0; } 40% { opacity: 1; transform: none; } }
+@keyframes strike { from { background-size: 0 1.5px; } }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes fade { from { opacity: 0; } }
+.nt.new { animation: pop .35s ease-out, glow 1.4s ease-out; }
+.toks code { animation: rise .35s ease-out both; }
+.verdict .pill { animation: pop .4s ease-out both; }
+.anim .alt.add { animation: addin .7s ease-out both; }
+.anim .lhs.new { animation: fade .5s ease-out both; }
+.removed s { text-decoration: none; background: linear-gradient(currentColor, currentColor) 0 55% / 100% 1.5px no-repeat; }
+.removed.anim s { animation: strike .6s ease-out both; }
+.fadein { animation: fade .4s ease-out; }
+.split.now { border-color: var(--ink); animation: rise .3s ease-out; }
+svg .node.fresh { animation: pop .4s ease-out both; transform-box: fill-box; transform-origin: center; }
+svg .edge.fresh { stroke-dasharray: 1; animation: draw .45s ease-out both; }
+svg .node.cur.n-nt rect, svg .node.cur.n-aux rect { stroke: var(--yes); stroke-width: 2.4; }
+
+/* derivación por la izquierda */
+.deriv { display: grid; gap: 6px; }
+.deriv h3 { margin: 0; font: 600 17px var(--f-head); }
+.deriv ol { margin: 0; padding: 8px 12px 8px 44px; max-height: 340px; overflow: auto; background: var(--panel);
+  border: 1px solid var(--rule); border-radius: var(--radius); font-family: var(--f-mono); font-size: 13.5px; line-height: 1.75; }
+.deriv li { white-space: nowrap; color: var(--ink); }
+.deriv li::marker { color: var(--ink-3); font-size: 11.5px; }
+.deriv li.last { animation: rise .35s ease-out; }
+.deriv .op { color: var(--ink-3); margin-right: 6px; }
+.deriv .x { text-decoration: underline 2px var(--yes); text-underline-offset: 4px; font-weight: 600; }
+.deriv .f { background: var(--yes-soft); border-radius: 3px; }
+.deriv .done { color: var(--yes); font-family: var(--f-body); margin-left: 8px; }
+
 footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid var(--rule); color: var(--ink-3); font-size: 13.5px; }
 section[id] { scroll-margin-top: 12px; }
 @media (max-width: 520px) { .pill { font-size: 22px; } .sec h2 { font-size: 22px; } }
-@media (prefers-reduced-motion: reduce) { .cell { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .cell { transition: none; } *, *::before, *::after { animation: none !important; } }
 </style>
 
 <div class="wrap">
@@ -314,9 +348,12 @@ section[id] { scroll-margin-top: 12px; }
       <div class="steps" id="steps" role="tablist" aria-label="Pasos de la conversión"></div>
       <div class="sec-head">
         <div class="steptitle" id="stepTitle"></div>
-        <div class="seg">
-          <button type="button" id="stepPrev" aria-label="Paso anterior">‹</button>
-          <button type="button" id="stepNext" aria-label="Paso siguiente">›</button>
+        <div class="ctrls">
+          <button class="btn" type="button" id="cnfPlay" title="Recorrer los 6 pasos uno tras otro">▶ Reproducir</button>
+          <div class="seg">
+            <button type="button" id="stepPrev" aria-label="Paso anterior">‹</button>
+            <button type="button" id="stepNext" aria-label="Paso siguiente">›</button>
+          </div>
         </div>
       </div>
       <p class="stepdesc" id="stepInfo"></p>
@@ -360,7 +397,7 @@ section[id] { scroll-margin-top: 12px; }
       <h2 id="h-tabla"><span class="n">4</span>Tabla del CYK</h2>
       <span class="muted">celda [i, l] = las l palabras que empiezan en la posición i</span>
     </div>
-    <p class="intro">Cada celda guarda qué símbolos pueden generar ese pedazo de la frase. La de arriba cubre la frase entera: si ahí está el símbolo inicial, la respuesta es SÍ.</p>
+    <p class="intro">Cada celda guarda qué símbolos pueden generar ese pedazo de la frase. La de arriba cubre la frase entera: si ahí está el símbolo inicial, la respuesta es SÍ. Con <b>▶ Animar llenado</b> se ve cada corte k que se prueba y de qué dos celdas sale cada símbolo.</p>
     <details class="more">
       <summary>Cómo se llena la tabla</summary>
       <div class="body">
@@ -375,9 +412,9 @@ section[id] { scroll-margin-top: 12px; }
       <button class="btn" type="button" id="stepBtn" title="Calcular la siguiente celda">Paso</button>
       <button class="btn" type="button" id="fillAll" title="Mostrar la tabla completa">Llenar todo</button>
       <div class="seg" id="speed" role="group" aria-label="Velocidad de la animación">
-        <button type="button" data-v="2" aria-pressed="false">lenta</button>
+        <button type="button" data-v="3" aria-pressed="false">lenta</button>
         <button type="button" data-v="1" aria-pressed="true">normal</button>
-        <button type="button" data-v="0.4" aria-pressed="false">rápida</button>
+        <button type="button" data-v="0.35" aria-pressed="false">rápida</button>
       </div>
       <span class="grow"></span>
       <span class="muted mono" id="progress"></span>
@@ -409,12 +446,24 @@ section[id] { scroll-margin-top: 12px; }
       </div>
     </div>
     <p class="intro" id="treeHint"></p>
+    <div class="ctrls" id="treeCtrls">
+      <button class="btn primary" type="button" id="treePlay">▶ Construir el árbol</button>
+      <button class="btn" type="button" id="treeStepBtn" title="Aplicar la siguiente regla">Paso</button>
+      <button class="btn" type="button" id="treeAll" title="Mostrar el árbol completo">Árbol completo</button>
+      <span class="grow"></span>
+      <span class="muted mono" id="treeProgress"></span>
+    </div>
     <div class="tree-scroll" id="treeBox"></div>
     <div class="legend">
       <span><span class="sw" style="background:var(--panel);box-shadow:inset 0 0 0 1px var(--ink)"></span>no terminal</span>
       <span><span class="sw" style="background:var(--term-soft)"></span>terminal</span>
       <span><span class="sw" style="background:var(--panel);outline:1px dashed var(--ink-3);outline-offset:-1px"></span>símbolo que agregó la CNF</span>
       <span><span class="eps" style="margin-right:4px">ε</span>cadena vacía</span>
+    </div>
+    <div class="deriv" id="derivBox">
+      <h3>Derivación por la izquierda</h3>
+      <p class="hint">Es el mismo árbol escrito como una secuencia: en cada línea se reemplaza el no terminal de más a la izquierda (<span class="mono" style="text-decoration:underline 2px var(--yes);text-underline-offset:4px">subrayado</span>) por el lado derecho de una regla.</p>
+      <ol id="deriv"></ol>
     </div>
     <details class="more">
       <summary>Cómo se lee el árbol</summary>
@@ -472,7 +521,10 @@ section[id] { scroll-margin-top: 12px; }
   const S = {
     engine: "js", preset: PRESETS[0] ? PRESETS[0].id : null,
     base: null, step: 6, out: null,
-    order: [], reveal: 0, timer: null,
+    order: [], cellIdx: new Map(),   // celdas en orden de llenado
+    frames: [], fpos: 0, timer: null, // cuadros de la animación del CYK (fpos > frames.length = terminada)
+    cnfTimer: null,
+    treeStep: null, treeTimer: null,  // árbol: cuántas reglas se han aplicado (null = completo)
     sel: null,            // {i, l, a, bp, k}
     treeIdx: 0, treeKind: "orig", nodeOn: null,
     speed: 1,             // multiplicador del tiempo entre celdas al animar
@@ -531,6 +583,7 @@ section[id] { scroll-margin-top: 12px; }
   function loadPreset(id, keepSentence) {
     const p = PRESETS.find((x) => x.id === id);
     if (!p) return;
+    stopCnf();
     S.preset = id;
     renderPresets();
     $("#grammar").value = p.grammar;
@@ -604,7 +657,9 @@ section[id] { scroll-margin-top: 12px; }
     for (const k of a) if (!b.has(k)) return true;
     return S.base.steps[i - 1].start !== S.base.steps[i].start;
   }
-  function renderSteps() {
+  // Vuelve a disparar una animación CSS aunque el elemento ya la tenga.
+  function replay(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+  function renderSteps(animate) {
     const steps = S.base.steps;
     $("#steps").innerHTML = steps.map((st, i) =>
       `<button type="button" role="tab" class="step${changed(i) ? " changed" : ""}" data-i="${i}" aria-pressed="${i === S.step}" aria-selected="${i === S.step}">` +
@@ -620,11 +675,15 @@ section[id] { scroll-margin-top: 12px; }
     const sym = (s) => nts.has(s) ? esc(s) : `<span class="tm">${esc(s)}</span>`;
     const lw = Math.max(2, ...st.rules.map((r) => [...r.lhs].length)) + 1;
     $("#stepRules").style.setProperty("--lw", lw + "ch");
+    let nNew = 0;
+    $("#stepRules").classList.toggle("anim", !!animate);
+    $("#stepRemoved").classList.toggle("anim", !!animate);
     $("#stepRules").innerHTML = st.rules.map((r) => {
       const alts = r.alts.map((a) => {
         const isNew = prevKeys && !prevKeys.has(r.lhs + "\u0000" + a.join(" "));
         const body = a.length ? a.map(sym).join(" ") : '<span class="eps">ε</span>';
-        return `<span class="alt${isNew ? " add" : ""}">${body}</span>`;
+        // las reglas nuevas entran una tras otra
+        return `<span class="alt${isNew ? " add" : ""}"${isNew ? ` style="animation-delay:${80 * nNew++}ms"` : ""}>${body}</span>`;
       }).join('<span class="bar">|</span>');
       const isNewLhs = prevLhs && !prevLhs.has(r.lhs);
       return `<div class="rule"><span class="lhs${isNewLhs ? " new" : ""}">${esc(r.lhs)}</span><span class="arrow">→</span><span class="alts">${alts}</span></div>`;
@@ -634,10 +693,25 @@ section[id] { scroll-margin-top: 12px; }
       const gone = [];
       for (const r of prev.rules) for (const a of r.alts) if (!cur.has(r.lhs + "\u0000" + a.join(" "))) gone.push(`${r.lhs} → ${a.length ? a.join(" ") : "ε"}`);
       $("#stepRemoved").hidden = !gone.length;
-      $("#stepRemoved").innerHTML = gone.length ? `<span class="lbl">Se quitaron:</span>` + gone.map((g) => `<s>${esc(g)}</s>`).join("") : "";
+      $("#stepRemoved").innerHTML = gone.length ? `<span class="lbl">Se quitaron:</span>` + gone.map((g, j) => `<s style="animation-delay:${300 + 120 * j}ms">${esc(g)}</s>`).join("") : "";
     } else $("#stepRemoved").hidden = true;
     $("#stepPrev").disabled = S.step === 0;
     $("#stepNext").disabled = S.step === steps.length - 1;
+    if (animate) for (const id of ["#stepInfo", "#stepNotes"]) replay($(id), "fadein");
+  }
+  function goStep(i) { S.step = i; renderSteps(true); }
+
+  // Recorre los pasos de la conversión uno tras otro.
+  function stopCnf() { if (S.cnfTimer) { clearInterval(S.cnfTimer); S.cnfTimer = null; } $("#cnfPlay").textContent = "▶ Reproducir"; }
+  function playCnf() {
+    if (S.cnfTimer) { stopCnf(); return; }
+    $("#cnfPlay").textContent = "❚❚ Pausa";
+    goStep(0);
+    S.cnfTimer = setInterval(() => {
+      if (S.step >= S.base.steps.length - 1) { stopCnf(); return; }
+      goStep(S.step + 1);
+      if (S.step >= S.base.steps.length - 1) stopCnf();
+    }, 2600 * Math.min(1.6, Math.max(0.6, S.speed)));
   }
 
   // ------------------------------------------------------------ análisis
@@ -648,9 +722,11 @@ section[id] { scroll-margin-top: 12px; }
     if (S.out.error) return;
     const r = S.out.result;
     S.sel = null; S.treeIdx = 0; S.nodeOn = null;
+    stopTree(); S.treeStep = null;
     S.order = [];
     if (r.tokens) { const n = r.tokens.length; for (let l = 1; l <= n; l++) for (let i = 0; i <= n - l; i++) S.order.push([i, l]); }
-    S.reveal = S.order.length;
+    buildFrames();
+    S.fpos = S.frames.length + 1;
     if (r.tokens && r.tokens.length) {
       const n = r.tokens.length;
       S.sel = { i: 0, l: n, a: r.accepted ? S.out.cnf.start : null, bp: 0 };
@@ -685,7 +761,7 @@ section[id] { scroll-margin-top: 12px; }
     v.hidden = false;
     v.className = "verdict " + (r.accepted ? "yes" : "no");
     const amb = BigInt(r.treeCount) > 1n;
-    const toks = r.tokens ? (r.tokens.length ? r.tokens.map((t) => `<code>${esc(t)}</code>`).join("") : '<span class="eps">ε (cadena vacía)</span>') : "n/d";
+    const toks = r.tokens ? (r.tokens.length ? r.tokens.map((t, j) => `<code style="animation-delay:${150 + 70 * j}ms">${esc(t)}</code>`).join("") : '<span class="eps">ε (cadena vacía)</span>') : "n/d";
     v.innerHTML =
       `<span class="pill ${r.accepted ? "yes" : "no"}">${r.accepted ? "SÍ" : "NO"}</span>` +
       `<div class="metric"><span class="k">Tiempo CYK</span><span class="v">${r.tokens ? fmtNs(r.ns) : "n/d"}</span>` +
@@ -699,7 +775,42 @@ section[id] { scroll-margin-top: 12px; }
 
   // ------------------------------------------------------------ pirámide
   const cellOf = (i, l) => S.out.result.table[l - 1][i];
-  const revealed = (i, l) => { const idx = S.order.findIndex(([a, b]) => a === i && b === l); return idx < S.reveal; };
+
+  // La animación avanza por cuadros: uno por cada celda de la fila de abajo y,
+  // en las demás filas, uno por cada corte k que se prueba (k = 1 … l−1).
+  function buildFrames() {
+    S.frames = []; S.cellIdx = new Map();
+    S.order.forEach(([i, l], c) => {
+      S.cellIdx.set(i + "," + l, c);
+      if (l === 1) S.frames.push({ c, i, l, k: null });
+      else for (let k = 1; k < l; k++) S.frames.push({ c, i, l, k });
+    });
+  }
+  const animDone = () => S.fpos > S.frames.length;
+  const curFrame = () => (S.fpos >= 1 && !animDone() ? S.frames[S.fpos - 1] : null);
+  // "full": ya calculada, "partial": se está calculando (faltan cortes), "pending": todavía no.
+  function cellState(i, l) {
+    if (animDone()) return "full";
+    const f = curFrame();
+    if (!f) return "pending";
+    const c = S.cellIdx.get(i + "," + l);
+    if (c !== f.c) return c < f.c ? "full" : "pending";
+    return f.k === null || f.k === l - 1 ? "full" : "partial";
+  }
+  const revealed = (i, l) => cellState(i, l) !== "pending";
+  // Símbolos de la celda que ya se encontraron en el punto actual de la animación.
+  function shownEntries(i, l) {
+    const cell = cellOf(i, l), f = curFrame();
+    if (!f || f.i !== i || f.l !== l || f.k === null) return cell;
+    return cell.filter(([, backs]) => backs.some((b) => b[0] !== null && b[0] <= f.k));
+  }
+  // ¿El símbolo apareció justo en este cuadro?
+  function isNewHere(i, l, backs) {
+    const f = curFrame();
+    if (!f || f.i !== i || f.l !== l) return false;
+    if (f.k === null) return true;
+    return backs.some((b) => b[0] === f.k) && !backs.some((b) => b[0] !== null && b[0] < f.k);
+  }
   function renderPyr() {
     const r = S.out.result, box = $("#pyr");
     const ctrlsOn = r.tokens && r.tokens.length > 0;
@@ -715,26 +826,28 @@ section[id] { scroll-margin-top: 12px; }
     const half = n > 12 ? 30 : 36;
     box.style.gridTemplateColumns = `repeat(${2 * n}, minmax(${half}px, 1fr))`;
     const start = S.out.cnf.start;
-    const cur = S.reveal > 0 && S.reveal < S.order.length ? S.order[S.reveal - 1] : null;
+    const f = curFrame();
+    const cur = f ? [f.i, f.l] : null;
     let html = "";
     const L = S.sel && S.sel.split ? S.sel.split : null;
     for (let l = n; l >= 1; l--) {
       for (let i = 0; i <= n - l; i++) {
         const cls = ["cell"];
-        const vis = revealed(i, l);
-        if (!vis) cls.push("pending");
+        const state = cellState(i, l);
+        if (state === "pending") cls.push("pending");
         if (cur && cur[0] === i && cur[1] === l) cls.push("cur");
         if (S.sel && S.sel.i === i && S.sel.l === l) cls.push("sel");
         if (L && L[0][0] === i && L[0][1] === l) cls.push("srcL");
         if (L && L[1][0] === i && L[1][1] === l) cls.push("srcR");
-        if (l === n && S.reveal === S.order.length) cls.push("apex", r.accepted ? "ok" : "bad");
-        const cell = cellOf(i, l);
+        if (l === n && animDone()) cls.push("apex", r.accepted ? "ok" : "bad");
+        const cell = shownEntries(i, l);
         const inner = cell.length
-          ? cell.map(([a]) => {
+          ? cell.map(([a, backs]) => {
               const on = S.sel && S.sel.i === i && S.sel.l === l && S.sel.a === a;
-              return `<button type="button" class="nt${a === start && l === n ? " start" : ""}${on ? " on" : ""}" data-i="${i}" data-l="${l}" data-a="${esc(a)}">${esc(a)}</button>`;
+              const isNew = isNewHere(i, l, backs);
+              return `<button type="button" class="nt${a === start && l === n && state === "full" ? " start" : ""}${on ? " on" : ""}${isNew ? " new" : ""}" data-i="${i}" data-l="${l}" data-a="${esc(a)}">${esc(a)}</button>`;
             }).join("")
-          : '<span class="empty">∅</span>';
+          : `<span class="empty">${state === "partial" ? "…" : "∅"}</span>`;
         html += `<div class="${cls.join(" ")}" data-i="${i}" data-l="${l}" style="grid-column:${2 * i + l} / span 2;grid-row:${n - l + 1}" title="[${i}, ${l}]: «${esc(words(i, l))}»"><span class="ix">${i},${l}</span>${inner}</div>`;
       }
     }
@@ -747,7 +860,8 @@ section[id] { scroll-margin-top: 12px; }
       html += `<div class="${c}" style="grid-column:${2 * i + 1} / span 2;grid-row:${n + 1}"><code>${esc(t)}</code><span class="ix">${i}</span></div>`;
     });
     box.innerHTML = html;
-    $("#progress").textContent = S.reveal < S.order.length ? `celda ${S.reveal} de ${S.order.length}` : `${S.order.length} celda${S.order.length === 1 ? "" : "s"} · n = ${n}`;
+    $("#progress").textContent = animDone() ? `${S.order.length} celda${S.order.length === 1 ? "" : "s"} · n = ${n}`
+      : f ? `celda ${f.c + 1} de ${S.order.length}${f.k ? ` · corte k = ${f.k}` : ""}` : "tabla vacía";
   }
 
   // ------------------------------------------------------------ explicación
@@ -767,8 +881,12 @@ section[id] { scroll-margin-top: 12px; }
     if (!r.tokens || !r.tokens.length || !S.sel) { box.innerHTML = ""; return; }
     const { i, l, a } = S.sel;
     if (!revealed(i, l)) { box.innerHTML = '<p class="muted">Esa celda todavía no se ha calculado.</p>'; return; }
-    const cell = cellOf(i, l);
-    let html = `<h3>Celda [${i}, ${l}] = ${cell.length ? "{" + cell.map((x) => esc(x[0])).join(", ") + "}" : "∅"} · <span class="words">«${esc(words(i, l))}»</span></h3>`;
+    const cell = shownEntries(i, l);
+    const f = curFrame(), here = f && f.i === i && f.l === l;
+    const partial = cellState(i, l) === "partial";
+    const content = cell.length ? "{" + cell.map((x) => esc(x[0])).join(", ") + (partial ? ", …" : "") + "}" : partial ? "{…}" : "∅";
+    let html = `<h3>Celda [${i}, ${l}] = ${content} · <span class="words">«${esc(words(i, l))}»</span>` +
+      (partial ? ` <span class="muted">calculando: corte ${f.k} de ${l - 1}</span>` : "") + "</h3>";
     if (a) {
       const entry = cell.find((x) => x[0] === a);
       if (entry) {
@@ -791,14 +909,15 @@ section[id] { scroll-margin-top: 12px; }
     } else if (!a) {
       html += `<p class="hint">Se prueban los ${l - 1} cortes posibles: la parte izquierda de longitud k y la derecha de longitud ${l} − k. Para cada par B, C se buscan reglas A → B C.</p><div class="splits">`;
       for (const row of splitInfo(i, l)) {
+        if (here && f.k !== null && row.k > f.k) break;   // cortes que la animación todavía no prueba
         const pressed = S.sel.k === row.k;
-        html += `<button type="button" class="split" data-k="${row.k}" aria-pressed="${pressed}"><span class="k">k = ${row.k}</span><span class="body">` +
+        html += `<button type="button" class="split${here && f.k === row.k ? " now" : ""}" data-k="${row.k}" aria-pressed="${pressed}"><span class="k">k = ${row.k}</span><span class="body">` +
           `<span class="L">${row.left.length ? "{" + row.left.map(esc).join(", ") + "}" : "∅"}</span> × <span class="R">${row.right.length ? "{" + row.right.map(esc).join(", ") + "}" : "∅"}</span> ⇒ ` +
           (row.made.length ? `<span class="res">${row.made.map(esc).join(", ")}</span>` : `<span class="none">ninguna regla</span>`) + `</span></button>`;
       }
       html += "</div>";
     }
-    if (l === r.tokens.length && i === 0 && S.reveal === S.order.length) {
+    if (l === r.tokens.length && i === 0 && animDone()) {
       html += `<p class="hint">${r.accepted ? `El inicial <b class="mono">${esc(S.out.cnf.start)}</b> está en la celda superior, así que w ∈ L(G).` : `El inicial <b class="mono">${esc(S.out.cnf.start)}</b> no está en la celda superior, así que w ∉ L(G).`}</p>`;
     }
     box.innerHTML = html;
@@ -819,16 +938,14 @@ section[id] { scroll-margin-top: 12px; }
 
   // ------------------------------------------------------------ animación
   function stopAnim() { if (S.timer) { clearInterval(S.timer); S.timer = null; } $("#play").textContent = "▶ Animar llenado"; }
+  function finalSel() { return { i: 0, l: S.out.result.tokens.length, a: S.out.result.accepted ? S.out.cnf.start : null, bp: 0, k: null }; }
   function stepOnce() {
-    if (S.reveal >= S.order.length) { stopAnim(); return false; }
-    S.reveal++;
-    const [i, l] = S.order[S.reveal - 1];
-    const cell = cellOf(i, l);
-    S.sel = { i, l, a: null, bp: 0, k: null };
-    if (l > 1) { const firstK = splitInfo(i, l).find((r) => r.made.length); S.sel.k = firstK ? firstK.k : 1; }
-    if (S.reveal === S.order.length) { S.sel = { i: 0, l: S.out.result.tokens.length, a: S.out.result.accepted ? S.out.cnf.start : null, bp: 0 }; stopAnim(); }
+    if (animDone()) { stopAnim(); return; }
+    S.fpos++;
+    const f = curFrame();
+    if (f) S.sel = { i: f.i, l: f.l, a: null, bp: 0, k: f.k };
+    else { S.sel = finalSel(); stopAnim(); }
     setSplitFromSel(); renderPyr(); renderInfo();
-    return cell;
   }
 
   // ------------------------------------------------------------ árbol
@@ -839,10 +956,14 @@ section[id] { scroll-margin-top: 12px; }
     let cursor = 16, leafIdx = 0, maxDepth = 0;
     const W = (label, eps) => eps ? 26 : Math.max(46, [...label].length * 8.1 + 22);
     (function depth(t, d) { maxDepth = Math.max(maxDepth, d); if (t.c) t.c.forEach((c) => depth(c, d + 1)); })(t, 0);
+    let exp = 0;
     function rec(t, d) {
       const nd = { d };
       if (t.c) {
+        nd.exp = exp++;   // orden en que se expande en la derivación por la izquierda (preorden)
         const kids = t.c.map((c) => rec(c, d + 1));
+        kids.forEach((k) => { k.parent = nd; });
+        nd.kids = kids;
         nd.x = (kids[0].x + kids[kids.length - 1].x) / 2;
         nd.label = t.s; nd.kind = "nt";
         const spans = kids.map((k) => k.span).filter(Boolean);
@@ -858,7 +979,7 @@ section[id] { scroll-margin-top: 12px; }
       nodes.push(nd);
       return nd;
     }
-    rec(t, 0);
+    const root = rec(t, 0);
     // separar nodos internos que se encimen en la misma fila
     const rows = new Map();
     for (const nd of nodes) { if (!rows.has(nd.d)) rows.set(nd.d, []); rows.get(nd.d).push(nd); }
@@ -871,11 +992,12 @@ section[id] { scroll-margin-top: 12px; }
       }
       const last = row[row.length - 1]; width = Math.max(width, last.x + last.w / 2 + 16);
     }
-    return { nodes, edges, width, height: (maxDepth + 1) * 64 + 24 };
+    return { nodes, edges, width, height: (maxDepth + 1) * 64 + 24, root, nExp: exp };
   }
   function renderTree() {
     const r = S.out.result, box = $("#treeBox");
     $("#treeNav").hidden = true;
+    $("#treeCtrls").hidden = $("#derivBox").hidden = !r.accepted;
     if (!r.accepted) {
       box.innerHTML = `<p class="muted" style="padding:16px;margin:0">No hay parse tree: la frase no pertenece al lenguaje.</p>`;
       $("#treeHint").textContent = ""; return;
@@ -892,19 +1014,69 @@ section[id] { scroll-margin-top: 12px; }
       : "El árbol tal como sale del CYK. Los nodos punteados son símbolos que agregó la conversión (T_a, auxiliares de BIN).";
     const t = r.trees[S.treeIdx][S.treeKind];
     const L = layoutTree(t);
+    const step = S.treeStep === null ? L.nExp : S.treeStep;
+    // Un nodo se ve cuando su padre ya se expandió; los hijos de la última regla aplicada entran animados.
+    const visible = (nd) => !nd.parent || nd.parent.exp < step;
+    const fresh = (nd) => S.treeStep !== null && nd.parent && nd.parent.exp === step - 1;
     const y = (d) => 28 + d * 64;
     let svg = `<svg width="${L.width}" height="${L.height}" viewBox="0 0 ${L.width} ${L.height}" role="img" aria-label="Parse tree">`;
-    for (const [a, b] of L.edges) svg += `<line class="edge" x1="${a.x}" y1="${y(a.d) + 13}" x2="${b.x}" y2="${y(b.d) - 13}"/>`;
+    for (const [a, b] of L.edges) {
+      if (!visible(b)) continue;
+      svg += `<line class="edge${fresh(b) ? " fresh" : ""}" pathLength="1" x1="${a.x}" y1="${y(a.d) + 13}" x2="${b.x}" y2="${y(b.d) - 13}"/>`;
+    }
     L.nodes.forEach((nd, idx) => {
+      if (!visible(nd)) return;
       let cls = nd.kind === "t" ? "n-t" : nd.kind === "eps" ? "n-eps" : (S.treeKind === "cnf" && isAux(nd.label) ? "n-aux" : "n-nt");
       const on = S.nodeOn === idx;
-      svg += `<g class="node ${cls}${on ? " on" : ""}" data-n="${idx}" tabindex="0" aria-label="${esc(nd.label)}">`;
+      const cur = S.treeStep !== null && step < L.nExp && nd.exp === step;   // el que se expande en el siguiente paso
+      svg += `<g class="node ${cls}${on ? " on" : ""}${fresh(nd) ? " fresh" : ""}${cur ? " cur" : ""}" data-n="${idx}" tabindex="0" aria-label="${esc(nd.label)}"${fresh(nd) ? ` style="animation-delay:${120 + 60 * nd.parent.kids.indexOf(nd)}ms"` : ""}>`;
       if (nd.kind !== "eps") svg += `<rect x="${nd.x - nd.w / 2}" y="${y(nd.d) - 13}" width="${nd.w}" height="26" rx="3"/>`;
       svg += `<text x="${nd.x}" y="${y(nd.d) + 0.5}">${esc(nd.label)}</text></g>`;
     });
     svg += "</svg>";
     box.innerHTML = svg;
     S.layout = L;
+    $("#treeProgress").textContent = step < L.nExp ? `regla ${step} de ${L.nExp}` : `${L.nExp} reglas aplicadas`;
+    renderDerivation(L, step);
+  }
+
+  // Derivación por la izquierda: se reemplaza, en orden, cada nodo interno por sus hijos.
+  function renderDerivation(L, step) {
+    const internal = L.nodes.filter((nd) => nd.kids).sort((a, b) => a.exp - b.exp);
+    const forms = [[L.root]];
+    let form = [L.root];
+    for (const nd of internal) {
+      const at = form.indexOf(nd);
+      form = [...form.slice(0, at), ...nd.kids.filter((k) => k.kind !== "eps"), ...form.slice(at + 1)];
+      forms.push(form);
+    }
+    const sym = (nd, j) => {
+      const cls = [nd.kind === "t" ? "tm" : ""];
+      if ((j < step || S.treeStep !== null) && internal[j] === nd) cls.push("x");   // el que se expande a continuación
+      if (j > 0 && j === step && S.treeStep !== null && nd.parent === internal[j - 1]) cls.push("f");   // recién puesto
+      return `<span class="${cls.join(" ").trim()}">${esc(nd.label)}</span>`;
+    };
+    let html = "";
+    for (let j = 0; j <= step; j++) {
+      const body = forms[j].length ? forms[j].map((nd) => sym(nd, j)).join(" ") : '<span class="eps">ε</span>';
+      const last = j === step && S.treeStep !== null;
+      html += `<li class="${last ? "last" : ""}"><span class="op">${j ? "⇒" : "&nbsp;"}</span>${body}` +
+        (j === internal.length ? '<span class="done">✓ la frase</span>' : "") + "</li>";
+    }
+    const box = $("#deriv");
+    box.innerHTML = html;
+    if (S.treeStep !== null) box.scrollTop = box.scrollHeight;
+  }
+
+  // Construcción animada del árbol, una regla a la vez.
+  const treeDelay = () => 850 * S.speed;
+  function stopTree() { if (S.treeTimer) { clearInterval(S.treeTimer); S.treeTimer = null; } $("#treePlay").textContent = "▶ Construir el árbol"; }
+  function treeTick() {
+    const total = S.layout ? S.layout.nExp : 0;
+    if (S.treeStep === null || S.treeStep >= total) { stopTree(); return; }
+    S.treeStep++;
+    renderTree();
+    if (S.treeStep >= total) stopTree();
   }
   function pickNode(idx) {
     const nd = S.layout.nodes[idx];
@@ -946,12 +1118,14 @@ section[id] { scroll-margin-top: 12px; }
   // ------------------------------------------------------------ eventos
   $("#presets").addEventListener("click", (e) => { const b = e.target.closest("[data-id]"); if (b) loadPreset(b.dataset.id); });
   $("#grammar").addEventListener("input", () => {
+    stopCnf();
     if (S.preset) { S.preset = null; renderPresets(); $("#gramFile").textContent = "gramática editada"; }
     clearTimeout(convTimer); convTimer = setTimeout(() => convert(true), 350);
   });
-  $("#steps").addEventListener("click", (e) => { const b = e.target.closest("[data-i]"); if (b) { S.step = +b.dataset.i; renderSteps(); } });
-  $("#stepPrev").addEventListener("click", () => { if (S.step > 0) { S.step--; renderSteps(); } });
-  $("#stepNext").addEventListener("click", () => { if (S.step < S.base.steps.length - 1) { S.step++; renderSteps(); } });
+  $("#steps").addEventListener("click", (e) => { const b = e.target.closest("[data-i]"); if (b) { stopCnf(); goStep(+b.dataset.i); } });
+  $("#stepPrev").addEventListener("click", () => { stopCnf(); if (S.step > 0) goStep(S.step - 1); });
+  $("#stepNext").addEventListener("click", () => { stopCnf(); if (S.step < S.base.steps.length - 1) goStep(S.step + 1); });
+  $("#cnfPlay").addEventListener("click", playCnf);
   $("#askForm").addEventListener("submit", (e) => { e.preventDefault(); run(); });
   for (const id of ["#exYes", "#exNo"]) $(id).addEventListener("click", (e) => { const b = e.target.closest("[data-s]"); if (b) { $("#sentence").value = b.dataset.s; run(); } });
   $("#pyr").addEventListener("click", (e) => {
@@ -971,10 +1145,10 @@ section[id] { scroll-margin-top: 12px; }
     if (b.dataset.k !== undefined) S.sel.k = +b.dataset.k;
     setSplitFromSel(); renderPyr(); renderInfo();
   });
-  const animDelay = () => Math.max(140, Math.min(650, 5200 / S.order.length)) * S.speed;
+  const animDelay = () => Math.max(180, Math.min(800, 15000 / S.frames.length)) * S.speed;
   $("#play").addEventListener("click", () => {
     if (S.timer) { stopAnim(); return; }
-    if (S.reveal >= S.order.length) S.reveal = 0;
+    if (animDone()) S.fpos = 0;
     $("#play").textContent = "❚❚ Pausa";
     stepOnce();
     S.timer = setInterval(stepOnce, animDelay());
@@ -986,17 +1160,28 @@ section[id] { scroll-margin-top: 12px; }
     S.speed = +b.dataset.v;
     for (const x of $("#speed").children) x.setAttribute("aria-pressed", x === b);
     if (S.timer) { clearInterval(S.timer); S.timer = setInterval(stepOnce, animDelay()); }
+    if (S.treeTimer) { clearInterval(S.treeTimer); S.treeTimer = setInterval(treeTick, treeDelay()); }
   });
-  $("#stepBtn").addEventListener("click", () => { stopAnim(); if (S.reveal >= S.order.length) S.reveal = 0; stepOnce(); });
-  $("#fillAll").addEventListener("click", () => {
-    stopAnim(); S.reveal = S.order.length;
-    const n = S.out.result.tokens.length;
-    select({ i: 0, l: n, a: S.out.result.accepted ? S.out.cnf.start : null, bp: 0, k: null });
+  $("#stepBtn").addEventListener("click", () => { stopAnim(); if (animDone()) S.fpos = 0; stepOnce(); });
+  $("#fillAll").addEventListener("click", () => { stopAnim(); S.fpos = S.frames.length + 1; select(finalSel()); });
+  // Cambiar de árbol muestra el nuevo completo.
+  function showTree(fn) { stopTree(); S.treeStep = null; S.nodeOn = null; fn(); renderTree(); }
+  $("#kOrig").addEventListener("click", () => showTree(() => { S.treeKind = "orig"; }));
+  $("#kCnf").addEventListener("click", () => showTree(() => { S.treeKind = "cnf"; }));
+  $("#tPrev").addEventListener("click", () => showTree(() => { const n = S.out.result.trees.length; S.treeIdx = (S.treeIdx - 1 + n) % n; }));
+  $("#tNext").addEventListener("click", () => showTree(() => { const n = S.out.result.trees.length; S.treeIdx = (S.treeIdx + 1) % n; }));
+  $("#treePlay").addEventListener("click", () => {
+    if (S.treeTimer) { stopTree(); return; }
+    if (S.treeStep === null || S.treeStep >= S.layout.nExp) { S.treeStep = 0; S.nodeOn = null; renderTree(); }
+    $("#treePlay").textContent = "❚❚ Pausa";
+    S.treeTimer = setInterval(treeTick, treeDelay());
   });
-  $("#kOrig").addEventListener("click", () => { S.treeKind = "orig"; S.nodeOn = null; renderTree(); });
-  $("#kCnf").addEventListener("click", () => { S.treeKind = "cnf"; S.nodeOn = null; renderTree(); });
-  $("#tPrev").addEventListener("click", () => { const n = S.out.result.trees.length; S.treeIdx = (S.treeIdx - 1 + n) % n; S.nodeOn = null; renderTree(); });
-  $("#tNext").addEventListener("click", () => { const n = S.out.result.trees.length; S.treeIdx = (S.treeIdx + 1) % n; S.nodeOn = null; renderTree(); });
+  $("#treeStepBtn").addEventListener("click", () => {
+    stopTree();
+    if (S.treeStep === null || S.treeStep >= S.layout.nExp) { S.treeStep = 0; S.nodeOn = null; renderTree(); return; }
+    treeTick();
+  });
+  $("#treeAll").addEventListener("click", () => showTree(() => {}));
   $("#treeBox").addEventListener("click", (e) => { const g = e.target.closest(".node"); if (g) pickNode(+g.dataset.n); });
   $("#treeBox").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { const g = e.target.closest(".node"); if (g) { e.preventDefault(); pickNode(+g.dataset.n); } } });
   $("#runBatch").addEventListener("click", runBatch);
@@ -1009,8 +1194,8 @@ section[id] { scroll-margin-top: 12px; }
     const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
     if (!d || !S.base) return;
     e.preventDefault();
-    S.step = Math.max(0, Math.min(S.base.steps.length - 1, S.step + d));
-    renderSteps();
+    stopCnf();
+    goStep(Math.max(0, Math.min(S.base.steps.length - 1, S.step + d)));
     $(`#steps [data-i="${S.step}"]`).focus();
   });
 
