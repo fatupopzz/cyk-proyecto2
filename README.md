@@ -79,6 +79,20 @@ X  -> + T X | e
 * Es **no terminal** todo lo que aparece a la izquierda de alguna regla; lo demás es terminal.
 * El **símbolo inicial** es el lado izquierdo de la primera regla.
 * `e`, `ε`, `eps` o `λ` sola representa la cadena vacía.
+* Una alternativa vacía (`S -> a |`) es un error: la cadena vacía se escribe explícitamente.
+* Si un símbolo con mayúscula inicial no tiene reglas propias (por ejemplo `Tt` por `T`),
+  el programa avisa: probablemente es un no terminal mal escrito.
+* Se aceptan archivos guardados con BOM (Bloc de notas de Windows) y con saltos de línea CRLF.
+
+Limitaciones del formato (por diseño):
+
+* `#` siempre empieza un comentario, así que no puede ser un terminal.
+* `e` sola en una alternativa es ε, así que la palabra «e» no puede ser un terminal por sí sola.
+* En la frase, las palabras van separadas por espacios: con terminales `a` y `aa`, `aaa` se
+  rechaza y hay que escribir `a a a` o `aa a`. Los signos pegados sí se separan, eligiendo
+  siempre el más largo (`+++` con `+` y `++` da `++ +`).
+* Si una regla tiene más de 16 símbolos anulables, la conversión se detiene con un error:
+  quitar las ε generaría más de 2¹⁶ reglas. Basta con partir la regla en reglas más cortas.
 
 ---
 
@@ -408,7 +422,7 @@ predice la teoría:
 (Mediciones en el entorno de desarrollo; los valores absolutos cambian según la
 máquina, lo que importa es la forma de la curva.)
 
-### 5.5 Pruebas automáticas (`python3 -m unittest -v`, 17 pruebas)
+### 5.5 Pruebas automáticas (`python3 -m unittest -v`, 23 pruebas)
 
 La forma más fuerte de probar que la conversión no cambió el lenguaje es
 compararla contra un algoritmo **independiente**. En `tests/earley.py` hay un
@@ -426,11 +440,32 @@ reconocedor de **Earley** que trabaja directo con la gramática original
 * Casos borde: lenguaje con ε (`S → a S b | e`), lenguaje vacío, ciclos unitarios, choques de nombres (`T_PLUS` o `S0` ya existentes).
 
 ```
-Ran 17 tests in 26.5s
+Ran 23 tests in 30.7s
 OK
 ```
 
-### 5.6 CNF manual vs la del programa
+### 5.6 Pruebas de robustez
+
+Además de las pruebas normales, se intentó romper el programa a propósito. Esto
+fue lo que falló y cómo quedó:
+
+| Intento | Qué pasaba | Ahora |
+|---|---|---|
+| Gramática guardada con BOM (Bloc de notas) | el inicial quedaba como `\ufeffE`, `E` pasaba a ser terminal y `(id)` daba NO | se quita el BOM |
+| `S -> a \|` (barra suelta) o `S -> # a` | se agregaba `S → ε` sin avisar | error con la línea y la causa |
+| `S -> Tt a` con `Tt` mal escrito | `Tt` se volvía terminal y todo daba NO sin explicación | aviso |
+| Regla con 20 símbolos anulables | la conversión tardaba 6 s (y crece ×2 por símbolo); la página se congelaba | error claro desde 17 |
+| Frase de ~500 palabras con recursión derecha | `RecursionError` al construir el árbol | funciona (probado con 600) |
+| Servidor: JSON que no es objeto o `grammar: null` | conexión cortada / se analizaba el texto «None» | respuesta 400 |
+| Interfaz con frases de 300 tokens | 45 000 celdas, 3 s por clic y una animación de millones de cuadros | la tabla no se dibuja si n > 80 y la animación pasa a ser por celda |
+| Caracteres de control Unicode (U+001C, U+2028…) | Python y JavaScript partían las líneas distinto | ambos motores los tratan igual |
+
+Lo que resistió sin cambios: símbolos con HTML (`<img onerror=…>`, no se ejecuta nada),
+emojis y acentos como terminales, ciclos unitarios, lenguaje vacío, recursión izquierda,
+nombres que chocan con los generados (`S0`, `T_PLUS`), rutas `../` en el servidor y
+600 casos aleatorios con Unicode comparando los dos motores.
+
+### 5.7 CNF manual vs la del programa
 
 La CNF hecha a mano y la generada son la **misma** salvo nombres:
 

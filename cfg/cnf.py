@@ -19,7 +19,11 @@ import itertools
 import re
 from dataclasses import dataclass, field
 
-from .grammar import Grammar, Production
+from .grammar import Grammar, GrammarError, Production
+
+# Una regla con k símbolos anulables genera 2^k reglas al quitar las ε.
+# Más de 16 (65 536 reglas) tarda segundos y congelaría la interfaz.
+MAX_NULLABLE = 16
 from .tree import Slot, subst
 
 
@@ -82,6 +86,9 @@ def step_del(g: Grammar) -> Step:
                 removed.append(str(p))
             continue
         pos = [i for i, s in enumerate(p.rhs) if s in wit]
+        if len(pos) > MAX_NULLABLE:
+            raise GrammarError(f"La regla «{p}» tiene {len(pos)} símbolos anulables: quitar las ε generaría "
+                               f"2^{len(pos)} = {2 ** len(pos)} reglas. Parta la regla en reglas más cortas.")
         for mask in itertools.product((True, False), repeat=len(pos)):
             omit = {i for i, keep in zip(pos, mask) if not keep}
             kept = [i for i in range(len(p.rhs)) if i not in omit]

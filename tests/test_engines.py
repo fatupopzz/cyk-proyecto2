@@ -46,6 +46,13 @@ def build_cases():
     words = "she he eats cooks a the cake fork with in cat oven drinks beer".split()
     for _ in range(150):
         cases.append((ing, " ".join(rng.choice(words) for _ in range(rng.randint(1, 9)))))
+    # casos de las pruebas de estrés: BOM, separadores raros, errores y avisos
+    expr = (ROOT / "grammars" / "expresiones.txt").read_text(encoding="utf-8")
+    cases += [
+        ("\ufeff" + expr, "(id)"), (expr.replace("\n", "\r\n"), "id+id"), ("S -> a\x1cb\u2028S -> c", "a b"),
+        ("S -> a |", "a"), ("S -> Tt a\nT -> b", "b a"), ("S -> " + "A " * 17 + "\nA -> a | e", "a"),
+        ("S -> <b> X\nX -> </b>", "<b> </b>"), ("S -> 🍕 🍺", "🍕🍺"), ("S -> a | e", "\ufeff \x1f"),
+    ]
     rng = random.Random(99)
     for _ in range(150):
         g = random_grammar(rng)

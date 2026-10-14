@@ -16,6 +16,7 @@ Formato aceptado (una o varias reglas por línea):
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from .tree import EPS_LEAF, Node, Slot
@@ -26,6 +27,21 @@ ARROWS = ("->", "→", "::=")
 
 class GrammarError(ValueError):
     pass
+
+
+_CONTROL = re.compile("[\x1c-\x1f\x85]")
+
+
+def clean_text(text: str) -> str:
+    """Quita el BOM que agrega el Bloc de notas de Windows y cambia por espacios
+    los separadores de control que Python y JavaScript no tratan igual."""
+    return _CONTROL.sub(" ", text.replace("\ufeff", ""))
+
+
+def split_lines(text: str) -> list[str]:
+    # Solo \n, \r\n y \r: str.splitlines() también corta en otros caracteres
+    # (\v, \f, U+2028…) y la interfaz en JavaScript no lo haría.
+    return re.split(r"\r\n|\r|\n", clean_text(text))
 
 
 @dataclass(frozen=True)
@@ -132,8 +148,8 @@ def original_pattern(lhs: str, rhs: tuple) -> tuple:
 
 def parse_grammar(text: str) -> Grammar:
     raw: list[tuple[int, str, list[list[str]]]] = []
-    for lineno, line in enumerate(text.splitlines(), 1):
-        line = line.split("#", 1)[0].strip() if not line.lstrip().startswith("#") else ""
+    for lineno, full in enumerate(split_lines(text), 1):
+        line = full.split("#", 1)[0].strip() if not full.lstrip().startswith("#") else ""
         if not line:
             continue
         arrow = next((a for a in ARROWS if a in line), None)
@@ -144,6 +160,11 @@ def parse_grammar(text: str) -> Grammar:
         if not lhs or len(lhs.split()) != 1:
             raise GrammarError(f"Línea {lineno}: lado izquierdo inválido «{lhs}»")
         alts = [alt.split() for alt in rhs.split("|")]
+        if any(not toks for toks in alts):
+            # 'S -> a |' agregaría una ε sin que se note
+            hint = " (todo lo que va después de # es un comentario)" if "#" in full else ""
+            raise GrammarError(f"Línea {lineno}: hay una alternativa vacía en «{line}»{hint}. "
+                               "Para la cadena vacía escriba e o ε")
         raw.append((lineno, lhs, alts))
 
     if not raw:
@@ -156,12 +177,23 @@ def parse_grammar(text: str) -> Grammar:
         for toks in alts:
             # 'ε' sola (o vacía) = producción vacía. Una 'e' solo cuenta como
             # ε si nadie la definió como no terminal.
-            if not toks or (len(toks) == 1 and toks[0] in EPS_TOKENS and toks[0] not in nts):
+            if len(toks) == 1 and toks[0] in EPS_TOKENS and toks[0] not in nts:
                 rhs: tuple = ()
             else:
                 rhs = tuple(t for t in toks if t not in ("ε", "λ"))
             g.add(lhs, rhs, original_pattern(lhs, rhs))
     return g
+
+
+def grammar_warnings(g: Grammar) -> list[str]:
+    """Avisos que no impiden convertir la gramática pero suelen ser errores."""
+    # Un terminal con mayúscula inicial casi siempre es un no terminal mal escrito
+    # o sin reglas (por ejemplo 'Tt' en vez de 'T'), que en silencio vuelve NO todo.
+    odd = [t for t in g.terminals if re.match(r"[A-Z]", t)]
+    if not odd:
+        return []
+    return ["Se toman como terminales porque no tienen reglas propias: " + ", ".join(f"«{t}»" for t in odd)
+            + ". Si eran no terminales, falta definirlos o están mal escritos."]
 
 
 def load_grammar(path) -> Grammar:

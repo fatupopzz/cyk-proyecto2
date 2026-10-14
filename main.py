@@ -19,6 +19,7 @@ from pathlib import Path
 
 from cfg import (GrammarError, TokenizeError, cyk, format_table, load_grammar,
                  to_cnf, tokenize)
+from cfg.grammar import grammar_warnings
 from cfg.tree import render_dot, to_ascii, to_bracket, to_dot
 
 COLOR = sys.stdout.isatty()
@@ -145,19 +146,20 @@ def main(argv=None) -> int:
 
     try:
         g = load_grammar(args.gramatica)
+        t0 = time.perf_counter_ns()
+        cnf, steps = to_cnf(g)
+        t_cnf = time.perf_counter_ns() - t0
     except (OSError, GrammarError) as e:
         print(red("Error al leer la gramática: ") + str(e), file=sys.stderr)
         return 2
-
-    t0 = time.perf_counter_ns()
-    cnf, steps = to_cnf(g)
-    t_cnf = time.perf_counter_ns() - t0
 
     print(bold(f"Gramática: {args.gramatica}"))
     print(f"  Original: {len(g.nonterminals)} no terminales, {len(g.terminals)} terminales, "
           f"{g.size()} producciones")
     print(f"  CNF:      {len(cnf.nonterminals)} no terminales, {cnf.size()} producciones, "
           f"símbolo inicial {cnf.start}  (conversión en {fmt_time(t_cnf)})")
+    for w in grammar_warnings(g):
+        print(c("  Aviso: " + w, "1;33"))
 
     if args.pasos:
         print_steps(steps)

@@ -120,6 +120,8 @@ a { color: var(--accent); }
 textarea, input[type="text"] { width: 100%; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--panel);
   padding: 10px 12px; font-family: var(--f-mono); font-size: 13.5px; line-height: 1.6; }
 textarea { resize: vertical; min-height: 230px; tab-size: 4; }
+.warn { background: var(--left-soft); color: var(--ink); border-left: 3px solid var(--left); border-radius: var(--radius);
+  padding: 8px 12px; font-size: 14.5px; }
 .err { background: var(--no-soft); color: var(--no); border-radius: var(--radius); padding: 8px 12px; font-size: 14.5px; }
 .stats { display: grid; gap: 2px; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .stats b { color: var(--ink); font-weight: 600; }
@@ -337,6 +339,7 @@ section[id] { scroll-margin-top: 12px; }
         </div>
       </details>
       <div class="err" id="gramErr" hidden></div>
+      <div class="warn" id="gramWarn" hidden></div>
       <div class="stats" id="gramStats"></div>
     </section>
 
@@ -611,6 +614,8 @@ section[id] { scroll-margin-top: 12px; }
       return;
     }
     $("#gramErr").hidden = true;
+    $("#gramWarn").hidden = !out.warnings.length;
+    $("#gramWarn").textContent = "Aviso: " + out.warnings.join(" ");
     S.base = out;
     const o = out.original, c = out.cnf;
     $("#gramStats").innerHTML =
@@ -780,11 +785,17 @@ section[id] { scroll-margin-top: 12px; }
 
   // La animación avanza por cuadros: uno por cada celda de la fila de abajo y,
   // en las demás filas, uno por cada corte k que se prueba (k = 1 … l−1).
+  // Con frases largas los cortes son demasiados (~n³/6): ahí la animación avanza de a una celda.
+  const MAX_K_FRAMES = 800;
+  // Más allá de esto la tabla tiene miles de celdas y dibujarla traba la página.
+  const MAX_DRAW = 80;
   function buildFrames() {
     S.frames = []; S.cellIdx = new Map();
+    const n = S.order.length ? S.order[S.order.length - 1][1] : 0;
+    S.byCell = n * (n * n - 1) / 6 + n > MAX_K_FRAMES;
     S.order.forEach(([i, l], c) => {
       S.cellIdx.set(i + "," + l, c);
-      if (l === 1) S.frames.push({ c, i, l, k: null });
+      if (l === 1 || S.byCell) S.frames.push({ c, i, l, k: null });
       else for (let k = 1; k < l; k++) S.frames.push({ c, i, l, k });
     });
   }
@@ -819,6 +830,13 @@ section[id] { scroll-margin-top: 12px; }
     for (const id of ["#play", "#stepBtn", "#fillAll"]) $(id).disabled = !ctrlsOn;
     if (!r.tokens) { box.style.gridTemplateColumns = "1fr"; box.innerHTML = '<p class="muted">No se llenó la tabla: hay un símbolo fuera del alfabeto.</p>'; $("#progress").textContent = ""; return; }
     const n = r.tokens.length;
+    if (n > MAX_DRAW) {
+      for (const id of ["#play", "#stepBtn", "#fillAll"]) $(id).disabled = true;
+      box.style.gridTemplateColumns = "1fr";
+      box.innerHTML = `<p class="muted">La frase tiene ${n} tokens: la tabla tendría ${group(String(n * (n + 1) / 2))} celdas y dibujarla trabaría la página. El resultado sí se calculó completo.</p>`;
+      $("#progress").textContent = "";
+      return;
+    }
     if (!n) {
       box.style.gridTemplateColumns = "1fr";
       box.innerHTML = `<p class="muted">Cadena vacía: el CYK no llena tabla; w = ε se acepta solo si existe ${esc(S.out.cnf.start)} → ε. ${r.accepted ? "Sí existe." : "No existe."}</p>`;
@@ -863,7 +881,7 @@ section[id] { scroll-margin-top: 12px; }
     });
     box.innerHTML = html;
     $("#progress").textContent = animDone() ? `${S.order.length} celda${S.order.length === 1 ? "" : "s"} · n = ${n}`
-      : f ? `celda ${f.c + 1} de ${S.order.length}${f.k ? ` · corte k = ${f.k}` : ""}` : "tabla vacía";
+      : f ? `celda ${f.c + 1} de ${S.order.length}${f.k ? ` · corte k = ${f.k}` : S.byCell && f.l > 1 ? " · frase larga: de a una celda" : ""}` : "tabla vacía";
   }
 
   // ------------------------------------------------------------ explicación
@@ -880,7 +898,7 @@ section[id] { scroll-margin-top: 12px; }
   }
   function renderInfo() {
     const box = $("#info"), r = S.out.result;
-    if (!r.tokens || !r.tokens.length || !S.sel) { box.innerHTML = ""; return; }
+    if (!r.tokens || !r.tokens.length || r.tokens.length > MAX_DRAW || !S.sel) { box.innerHTML = ""; return; }
     const { i, l, a } = S.sel;
     if (!revealed(i, l)) { box.innerHTML = '<p class="muted">Esa celda todavía no se ha calculado.</p>'; return; }
     const cell = shownEntries(i, l);
@@ -945,7 +963,11 @@ section[id] { scroll-margin-top: 12px; }
     if (animDone()) { stopAnim(); return; }
     S.fpos++;
     const f = curFrame();
-    if (f) S.sel = { i: f.i, l: f.l, a: null, bp: 0, k: f.k };
+    if (f) {
+      // animación por celda: se muestra el primer corte que produjo algo
+      const k = f.k !== null || f.l === 1 ? f.k : (splitInfo(f.i, f.l).find((row) => row.made.length) || { k: 1 }).k;
+      S.sel = { i: f.i, l: f.l, a: null, bp: 0, k };
+    }
     else { S.sel = finalSel(); stopAnim(); }
     setSplitFromSel(); renderPyr(); renderInfo();
   }

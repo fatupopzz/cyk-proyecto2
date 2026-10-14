@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import re
 
+from .grammar import clean_text
+
 
 class TokenizeError(ValueError):
     def __init__(self, msg: str, bad: str):
@@ -39,7 +41,7 @@ def tokenize(text: str, terminals) -> list[str]:
         raise TokenizeError(f"«{piece}» no es un terminal de la gramática", piece)
 
     out: list[str] = []
-    chunks = text.strip().split()
+    chunks = clean_text(text).split()
     if len(chunks) == 1 and chunks[0] in ("ε", "λ") and chunks[0] not in terms:
         return []  # cadena vacía explícita
     for idx, chunk in enumerate(chunks):

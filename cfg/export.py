@@ -26,7 +26,7 @@ import time
 
 from .cnf import to_cnf
 from .cyk import cyk
-from .grammar import Grammar, GrammarError, parse_grammar
+from .grammar import Grammar, GrammarError, parse_grammar, grammar_warnings
 from .tokenizer import TokenizeError, tokenize
 from .tree import Leaf, Node
 
@@ -45,15 +45,15 @@ def tree_json(t) -> dict:
 
 
 def analyze(grammar_text: str, sentence: str | None = None, max_trees: int = 20) -> dict:
-    out: dict = {"error": None, "steps": [], "cnf": None, "original": None, "result": None}
+    out: dict = {"error": None, "warnings": [], "steps": [], "cnf": None, "original": None, "result": None}
     try:
         g = parse_grammar(grammar_text)
+        t0 = time.perf_counter_ns()
+        cnf, steps = to_cnf(g)
     except GrammarError as e:
         out["error"] = str(e)
         return out
-
-    t0 = time.perf_counter_ns()
-    cnf, steps = to_cnf(g)
+    out["warnings"] = grammar_warnings(g)
     out["cnfNs"] = time.perf_counter_ns() - t0
     out["steps"] = [
         {"key": st.key, "title": st.title, "notes": st.notes,

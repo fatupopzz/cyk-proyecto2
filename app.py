@@ -63,9 +63,11 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json(413, {"error": "solicitud demasiado grande"})
         try:
             req = json.loads(self.rfile.read(length) or b"{}")
-            grammar = str(req.get("grammar", ""))
-            sentence = req.get("sentence")
-            sentence = None if sentence is None else str(sentence)
+            if not isinstance(req, dict):
+                raise TypeError("se esperaba un objeto JSON")
+            grammar, sentence = req.get("grammar", ""), req.get("sentence")
+            if not isinstance(grammar, str) or not (sentence is None or isinstance(sentence, str)):
+                raise TypeError("'grammar' y 'sentence' deben ser texto")
             max_trees = max(1, min(200, int(req.get("maxTrees", 20))))
         except (ValueError, TypeError) as e:
             return self._json(400, {"error": f"solicitud inválida: {e}"})
@@ -78,6 +80,9 @@ def main() -> None:
     ap.add_argument("--no-browser", action="store_true", help="no abrir el navegador")
     args = ap.parse_args()
 
+    # Cada solicitud corre en un hilo; los árboles de frases largas son profundos
+    # y el tamaño de pila por defecto de los hilos (512 KB en macOS) no alcanza.
+    threading.stack_size(64 * 1024 * 1024)
     server = ThreadingHTTPServer(("127.0.0.1", args.port), partial(Handler, directory=str(WEB)))
     url = f"http://localhost:{args.port}/"
     print(f"Laboratorio CYK en {url}  (Ctrl-C para salir)")

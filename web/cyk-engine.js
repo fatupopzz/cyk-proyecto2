@@ -82,10 +82,13 @@
   }
 
   function pySplit(s) { const t = s.trim(); return t ? t.split(/\s+/) : []; }
+  // Igual que clean_text en Python: sin BOM y con los separadores de control como espacios.
+  const cleanText = (t) => t.replace(/\uFEFF/g, "").replace(/[\x1c-\x1f\x85]/g, " ");
 
   function parseGrammar(text) {
     const raw = [];
-    text.split(/\r\n|\r|\n/).forEach((line, idx) => {
+    cleanText(text).split(/\r\n|\r|\n/).forEach((full, idx) => {
+      let line = full;
       const lineno = idx + 1;
       line = line.trimStart().startsWith("#") ? "" : line.split("#")[0].trim();
       if (!line) return;
@@ -95,7 +98,12 @@
       const lhs = line.slice(0, at).trim();
       const rhs = line.slice(at + arrow.length);
       if (!lhs || pySplit(lhs).length !== 1) throw new GrammarError(`Línea ${lineno}: lado izquierdo inválido «${lhs}»`);
-      raw.push([lhs, rhs.split("|").map(pySplit)]);
+      const alts = rhs.split("|").map(pySplit);
+      if (alts.some((toks) => !toks.length)) {
+        const hint = full.includes("#") ? " (todo lo que va después de # es un comentario)" : "";
+        throw new GrammarError(`Línea ${lineno}: hay una alternativa vacía en «${line}»${hint}. Para la cadena vacía escriba e o ε`);
+      }
+      raw.push([lhs, alts]);
     });
     if (!raw.length) throw new GrammarError("La gramática está vacía");
     const nts = new Set(raw.map((r) => r[0]));
@@ -104,7 +112,7 @@
       g.addNt(lhs);
       for (const toks of alts) {
         let rhs;
-        if (!toks.length || (toks.length === 1 && EPS_TOKENS.has(toks[0]) && !nts.has(toks[0]))) rhs = [];
+        if (toks.length === 1 && EPS_TOKENS.has(toks[0]) && !nts.has(toks[0])) rhs = [];
         else rhs = toks.filter((t) => t !== "ε" && t !== "λ");
         g.add(lhs, rhs, originalPattern(lhs, rhs));
       }
@@ -112,7 +120,15 @@
     return g;
   }
 
+  function grammarWarnings(g) {
+    const odd = g.terminals.filter((t) => /^[A-Z]/.test(t));
+    if (!odd.length) return [];
+    return ["Se toman como terminales porque no tienen reglas propias: " + odd.map((t) => `«${t}»`).join(", ") +
+      ". Si eran no terminales, falta definirlos o están mal escritos."];
+  }
+
   // -------------------------------------------------------------------- CNF
+  const MAX_NULLABLE = 16;
   const isUnit = (g, p) => p.rhs.length === 1 && g.isNt(p.rhs[0]);
   const str = (p) => `${p.lhs} → ${p.rhs.length ? p.rhs.join(" ") : "ε"}`;
 
@@ -153,6 +169,10 @@
       const pos = [];
       p.rhs.forEach((s, i) => { if (wit.has(s)) pos.push(i); });
       const k = pos.length;
+      if (k > MAX_NULLABLE) {
+        throw new GrammarError(`La regla «${str(p)}» tiene ${k} símbolos anulables: quitar las ε generaría ` +
+          `2^${k} = ${2 ** k} reglas. Parta la regla en reglas más cortas.`);
+      }
       for (let m = 0; m < (1 << k); m++) {
         const omit = new Set();
         for (let j = 0; j < k; j++) if ((m >> (k - 1 - j)) & 1) omit.add(pos[j]);
@@ -342,7 +362,7 @@
     const fail = (piece) => { throw new TokenizeError(`«${piece}» no es un terminal de la gramática`); };
 
     const out = [];
-    const chunks = pySplit(text);
+    const chunks = pySplit(cleanText(text));
     if (chunks.length === 1 && (chunks[0] === "ε" || chunks[0] === "λ") && !terms.has(chunks[0])) return [];
     chunks.forEach((chunk0, idx) => {
       let chunk = chunk0;
@@ -463,15 +483,18 @@
 
   function analyze(grammarText, sentence, maxTrees) {
     if (maxTrees === undefined) maxTrees = 20;
-    const out = { error: null, steps: [], cnf: null, original: null, result: null };
-    let g;
-    try { g = parseGrammar(grammarText); } catch (e) {
+    const out = { error: null, warnings: [], steps: [], cnf: null, original: null, result: null };
+    let g, cnf, steps, t0;
+    try {
+      g = parseGrammar(grammarText);
+      t0 = now();
+      ({ cnf, steps } = toCnf(g));
+    } catch (e) {
       if (e instanceof GrammarError) { out.error = e.message; return out; }
       throw e;
     }
-    const t0 = now();
-    const { cnf, steps } = toCnf(g);
     out.cnfNs = Math.round((now() - t0) * 1e6);
+    out.warnings = grammarWarnings(g);
     out.steps = steps.map((st) => ({ key: st.key, title: st.title, notes: st.notes, start: st.grammar.start, rules: rulesJson(st.grammar) }));
     out.original = { nonterminals: g.nonterminals, terminals: g.terminals, size: g.size() };
     out.cnf = { start: cnf.start, rules: rulesJson(cnf), nonterminals: cnf.nonterminals, terminals: cnf.terminals, size: cnf.size() };

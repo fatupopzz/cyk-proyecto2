@@ -15,11 +15,17 @@ Complejidad: O(n³ · |G|) en tiempo y O(n² · |V|) en espacio.
 from __future__ import annotations
 
 import itertools
+import sys
 import time
 from dataclasses import dataclass
 
 from .grammar import Grammar, Production
 from .tree import Leaf, Node, Slot, subst
+
+# Los árboles se construyen y recorren de forma recursiva: una frase de n palabras
+# puede dar un árbol de profundidad ~n. El límite por defecto (1000) se rompía
+# con frases de unas 500 palabras.
+sys.setrecursionlimit(max(sys.getrecursionlimit(), 10_000))
 
 
 @dataclass
@@ -74,7 +80,7 @@ def cnf_tree(d) -> Node:
     prod, kids = d
     if not prod.rhs:
         return Node(prod.lhs, (Leaf("ε", eps=True),))
-    return Node(prod.lhs, tuple(Leaf(k) if isinstance(k, str) else cnf_tree(k) for k in kids))
+    return Node(prod.lhs, tuple([Leaf(k) if isinstance(k, str) else cnf_tree(k) for k in kids]))
 
 
 def _forest(d) -> tuple:

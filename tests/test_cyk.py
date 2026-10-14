@@ -14,6 +14,9 @@ import unittest
 from pathlib import Path
 
 from cfg import cyk, is_cnf, load_grammar, parse_grammar, to_cnf, tokenize
+from cfg.cnf import MAX_NULLABLE
+from cfg.export import tree_json
+from cfg.grammar import GrammarError, grammar_warnings
 from cfg.tree import EPS, Leaf, Node, tree_yield
 from tests.earley import earley_accepts
 
@@ -211,6 +214,51 @@ class TestEdgeCases(unittest.TestCase):
         cnf, _ = to_cnf(g)
         self.assertEqual(is_cnf(cnf), [])
         self.assertTrue(cyk(cnf, ["x", "+", "y", "+", "y"]).accepted)
+
+
+class TestRobustness(unittest.TestCase):
+    """Casos que rompían el programa en las pruebas de estrés."""
+
+    EXPR = "E -> T X\nX -> + T X | e\nT -> F Y\nY -> * F Y | e\nF -> ( E ) | id\n"
+
+    def test_bom_from_windows_notepad(self):
+        g = parse_grammar("\ufeff" + self.EXPR)
+        self.assertEqual(g.start, "E")
+        self.assertNotIn("E", g.terminals)
+        cnf, _ = to_cnf(g)
+        self.assertTrue(cyk(cnf, tokenize("(id)", g.terminals)).accepted)
+
+    def test_control_separators(self):
+        g = parse_grammar("S -> a\x1cb\u2028S -> c")   # \x1c y U+2028 son espacios, no saltos de línea
+        self.assertEqual([p.rhs for p in g.prods["S"]], [("a", "b", "S", "->", "c")])
+
+    def test_empty_alternative_is_an_error(self):
+        for text in ("S -> a |", "S -> | a", "S ->", "S -> a || b"):
+            with self.assertRaises(GrammarError, msg=text):
+                parse_grammar(text)
+        self.assertEqual(parse_grammar("S -> a | e").prods["S"][1].rhs, ())
+
+    def test_undefined_nonterminal_warning(self):
+        self.assertTrue(grammar_warnings(parse_grammar("S -> Tt a\nT -> b")))
+        self.assertEqual(grammar_warnings(load_grammar(G / "ingles.txt")), [])
+        self.assertEqual(grammar_warnings(load_grammar(G / "expresiones.txt")), [])
+
+    def test_too_many_nullables_is_an_error_not_a_hang(self):
+        g = parse_grammar("S -> " + " ".join(["A"] * (MAX_NULLABLE + 1)) + "\nA -> a | e")
+        with self.assertRaises(GrammarError):
+            to_cnf(g)
+        g = parse_grammar("S -> " + " ".join(["A"] * MAX_NULLABLE) + "\nA -> a | e")
+        cnf, _ = to_cnf(g)
+        self.assertTrue(cyk(cnf, ["a"] * 3).accepted)
+
+    def test_deep_tree(self):
+        # antes: RecursionError con unas 500 palabras
+        g = parse_grammar("S -> a S | a")
+        cnf, _ = to_cnf(g)
+        r = cyk(cnf, ["a"] * 550)
+        t_cnf, t_orig = r.trees(1)[0]
+        self.assertEqual(tree_yield(t_orig), ["a"] * 550)
+        self.assertEqual(len(tree_json(t_cnf)["c"]), 2)
 
 
 class TestTokenizer(unittest.TestCase):
